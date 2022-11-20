@@ -6,7 +6,7 @@
 #include <Ws2tcpip.h>
 
 // DLL required for windows socket
-#pragma comment(lib,"WS2_32")
+#pragma comment(lib,"ws2_32.lib")
 
 /*Custom Includes*/
 #include "BaseModule.h"

@@ -21,12 +21,18 @@
     <ClCompile Include="WinUDPTxModule.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="WAVWriterModule.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="WinUDPRxModule.h">
+    <ClInclude Include="include/WinUDPRxModule.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="WinUDPTxModule.h">
+    <ClInclude Include="include/WinUDPTxModule.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="WAVWriterModule.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
