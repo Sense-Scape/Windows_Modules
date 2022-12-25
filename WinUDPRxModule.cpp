@@ -1,12 +1,13 @@
 #include "WinUDPRxModule.h"
 
-WinUDPRxModule::WinUDPRxModule(std::string sIPAddress, std::string sUDPPort, unsigned uMaxInputBufferSize, int iBufferLen = 512): BaseModule(uMaxInputBufferSize),
-																																	m_sIPAddress(sIPAddress),
-																																	m_sUDPPort(sUDPPort),
-																																	m_iBufferLen(iBufferLen),
-																																	m_WinSocket(),
-																																	m_WSA(),
-																																	m_SocketStruct()
+WinUDPRxModule::WinUDPRxModule(std::string sIPAddress, std::string sUDPPort, unsigned uMaxInputBufferSize, int iDatagramSize = 512) :
+BaseModule(uMaxInputBufferSize),																															
+m_sIPAddress(sIPAddress),																																
+m_sUDPPort(sUDPPort),																																
+m_iDatagramSize(iDatagramSize),
+m_WinSocket(),																																	
+m_WSA(),																																
+m_SocketStruct()
 {
 	ConnectUDPSocket();
 
@@ -62,13 +63,16 @@ void WinUDPRxModule::Process(std::shared_ptr<BaseChunk> pBaseChunk)
 	{
 		//TODO: if this buffer is persistent, ensure that it is cleared before use
 		// std::fill_n(m_cReceivingBuf, 512, 0);
+		std::vector<char> vcByteData;
+		vcByteData.reserve(512);
+
 		unsigned uReceivedDataLength = 0;
 
-		int a= sizeof(m_SocketStruct);
-		auto b = &a;
+		int iLength= sizeof(m_SocketStruct);
+		auto riLength = &iLength;
 
 		// Try to receive some data, this is a blocking 
-		if ((uReceivedDataLength = recvfrom(m_WinSocket, m_cReceivingBuf, 512, 0, (struct sockaddr*)&m_SocketStruct, b)) == SOCKET_ERROR)
+		if ((uReceivedDataLength = recvfrom(m_WinSocket, vcByteData.data(), m_iDatagramSize, 0, (struct sockaddr*)&m_SocketStruct, riLength)) == SOCKET_ERROR)
 			printf("recvfrom() failed with error code : %d", WSAGetLastError());
 		
 		if (m_bShutDown)
@@ -76,10 +80,8 @@ void WinUDPRxModule::Process(std::shared_ptr<BaseChunk> pBaseChunk)
 			
 		// Creating Chunk
 		auto pUDPDataChunk = std::make_shared<UDPChunk>(512);
-		for (int idataIndex = 0; idataIndex < 512; idataIndex++)
-		{
-			pUDPDataChunk->m_vcDataChunk[idataIndex] = m_cReceivingBuf[idataIndex];
-		}
+		pUDPDataChunk->m_vcDataChunk = vcByteData;
+
 
 		TryPassChunk(std::dynamic_pointer_cast<BaseChunk>(pUDPDataChunk));
 	}
