@@ -64,7 +64,7 @@ void WinUDPRxModule::Process(std::shared_ptr<BaseChunk> pBaseChunk)
 		//TODO: if this buffer is persistent, ensure that it is cleared before use
 		// std::fill_n(m_cReceivingBuf, 512, 0);
 		std::vector<char> vcByteData;
-		vcByteData.reserve(512);
+		vcByteData.resize(512);
 
 		unsigned uReceivedDataLength = 0;
 
@@ -72,12 +72,12 @@ void WinUDPRxModule::Process(std::shared_ptr<BaseChunk> pBaseChunk)
 		auto riLength = &iLength;
 
 		// Try to receive some data, this is a blocking 
-		if ((uReceivedDataLength = recvfrom(m_WinSocket, vcByteData.data(), m_iDatagramSize, 0, (struct sockaddr*)&m_SocketStruct, riLength)) == SOCKET_ERROR)
+		if ((uReceivedDataLength = recvfrom(m_WinSocket, &vcByteData[0], m_iDatagramSize, 0, (struct sockaddr*)&m_SocketStruct, riLength)) == SOCKET_ERROR)
 			printf("recvfrom() failed with error code : %d", WSAGetLastError());
 		
 		if (m_bShutDown)
 			break;
-			
+
 		// Creating Chunk
 		auto pUDPDataChunk = std::make_shared<UDPChunk>(512);
 		pUDPDataChunk->m_vcDataChunk = vcByteData;

@@ -27,10 +27,6 @@ void WAVWriterModule::WriteWAVFile(std::shared_ptr<BaseChunk> pBaseChunk)
 	// Writing WAV header
 	fwrite(&pvcWAVHeaderBytes->at(0), sizeof(char), (*pvcWAVHeaderBytes).size(), WAVRecordingFile);
 
-	for (size_t i = 0; i < 256; i++)
-	{
-		std::cout << pWAVChunk->m_vfData[i] << std::endl;
-	}
 	// Writing data - data - bytes - size of
 	fwrite(&(pWAVChunk->m_vfData[0]), pWAVChunk->m_sWAVHeader.bitsPerSample / 8, pWAVChunk->m_vfData.size(), WAVRecordingFile);
 

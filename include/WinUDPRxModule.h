@@ -15,17 +15,12 @@
 
 /**
  * @brief Windows UDP Receiving Module to receive data from a UDP port
- * 
- * Class input format:
- * Class output format:
- *
  */
 class WinUDPRxModule :
 	public BaseModule
 {
 
 public:
-
     /**
      * @brief WinUDPRxModule constructor
      * @param[in] sIPAddress string format of host IP address
