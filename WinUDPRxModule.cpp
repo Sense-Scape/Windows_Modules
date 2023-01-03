@@ -20,15 +20,6 @@ WinUDPRxModule::~WinUDPRxModule()
 
 void WinUDPRxModule::ConnectUDPSocket()
 {
-	WSADATA wsaData;
-
-	//// Initialize Winsock
-	auto iResult = WSAStartup(MAKEWORD(2, 2), &wsaData);
-	if (iResult != 0) {
-		printf("WSAStartup failed: %d\n", iResult);
-		
-	}
-
 	// Configuring Web Security Appliance
 	if (WSAStartup(MAKEWORD(2, 2), &m_WSA) != 0)
 	{
@@ -45,7 +36,7 @@ void WinUDPRxModule::ConnectUDPSocket()
 
 	//Prepare the sockaddr_in structure
 	m_SocketStruct.sin_family = AF_INET;
-	m_SocketStruct.sin_addr.s_addr = INADDR_ANY;
+	m_SocketStruct.sin_addr.s_addr = INADDR_ANY; // Not used therefore not set
 	m_SocketStruct.sin_port = htons(std::stoi(m_sUDPPort));
 
 	if (bind(m_WinSocket, (struct sockaddr*)&m_SocketStruct, sizeof(m_SocketStruct)) == SOCKET_ERROR)
