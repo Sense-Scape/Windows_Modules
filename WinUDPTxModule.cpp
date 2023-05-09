@@ -54,45 +54,44 @@ void WinUDPTxModule::ConnectUDPSocket()
 	else
 	{
 		// Now the socket is ready to use for communication
-		std::cout << "Socket initialized and bound to loopback address on port 8081" << std::endl;
+		std::cout << "Socket initialized and bound to " + m_sIPAddress + " address on port " + m_sUDPPort << std::endl;
 	}
 }
 
 void WinUDPTxModule::Process(std::shared_ptr<BaseChunk> pBaseChunk)
 {
-	while (!m_bShutDown)
-	{
 		// Serialize Chunk
-		auto pTimeChunk = std::static_pointer_cast<TimeChunk>(pBaseChunk);
+		auto pTimeChunk = std::dynamic_pointer_cast<TimeChunk>(pBaseChunk);
 		unsigned uBytesTransmitted = 0;
 
+		uint16_t tmp[256] = { 0 };
 		char vcByteData[512] = {0};
 
 		int iLength = sizeof(m_SocketStruct);
 
-		std::cout << "------" << std::endl;
-		for (size_t i = 0; i < 256; i++)
+		for (size_t i = 0; i < 128; i++)
 		{
-			std::cout << pTimeChunk->m_vvfTimeChunks[0][i] << std::endl;
+			tmp[i] = pTimeChunk->m_vvi16TimeChunks[0][i];
 		}
-
-		// While loop to iterate through data untill all transmitted
-		while (uBytesTransmitted < pTimeChunk->m_vvfTimeChunks[0].size()*2)
+		for (size_t i = 0; i < 128; i++)
 		{
-			pTimeChunk->m_vvfTimeChunks[0][uBytesTransmitted / 2];
-			memcpy(&vcByteData[0], &pTimeChunk->m_vvfTimeChunks[0][uBytesTransmitted / 2], 512);
+				tmp[128 + i] = pTimeChunk->m_vvi16TimeChunks[1][i];
+		}
+		// While loop to iterate through data untill all transmitted
+		/*while (uBytesTransmitted < pTimeChunk->m_vvi16TimeChunks[0][].size() * 2)
+		{*/
+			
+			memcpy(&vcByteData[0], &tmp[0], 512);
 
 			int res = sendto(m_WinSocket, &vcByteData[0], 512, 0, (struct sockaddr*)&m_SocketStruct, iLength);
+
 			if (res == SOCKET_ERROR)	
-			{
 				std::cerr << "sendto failed with error: " << WSAGetLastError() << std::endl;
-			}
 
-			uBytesTransmitted += 512;	
-		}
+			//uBytesTransmitted += 512;	
+		//}
 
-		//done
-	}
+		// Done Transmitting, wait for new data
 }
 
 void WinUDPTxModule::CloseUDPSocket()

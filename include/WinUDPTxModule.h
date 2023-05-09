@@ -37,6 +37,12 @@ public:
      */
     ModuleType GetModuleType() override { return ModuleType::WinUDPRxModule; };
 
+protected:
+    /*
+     * @brief Module process to reveice data from UDP buffer and pass to next module
+     */
+    void Process(std::shared_ptr<BaseChunk> pBaseChunk) override;
+
 private:
     std::string m_sIPAddress;	        ///< string format of host IP address
     std::string m_sUDPPort;		        ///< string format of port to listen on
@@ -54,11 +60,6 @@ private:
      * @brief Closes Windows socket
      */
     void CloseUDPSocket();
-
-    /*
-     * @brief Module process to reveice data from UDP buffer and pass to next module
-     */
-    void Process(std::shared_ptr<BaseChunk> pBaseChunk) override;
 };
 
 #endif

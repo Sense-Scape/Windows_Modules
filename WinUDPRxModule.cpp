@@ -34,6 +34,11 @@ void WinUDPRxModule::ConnectUDPSocket()
 		throw;
 	}
 
+	int optval = 1;
+	if (setsockopt(m_WinSocket, SOL_SOCKET, SO_REUSEADDR, (char*)&optval, sizeof(optval)) == SOCKET_ERROR) {
+		// Handle error
+	}
+
 	//Prepare the sockaddr_in structure
 	m_SocketStruct.sin_family = AF_INET;
 	m_SocketStruct.sin_addr.s_addr = INADDR_ANY; // Not used therefore not set

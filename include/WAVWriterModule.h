@@ -4,6 +4,7 @@
 /*Standard Includes*/
 #include <time.h>
 #include <iostream>
+#include <filesystem>
 
 /*Custom Includes*/
 #include "BaseModule.h"
@@ -19,6 +20,11 @@ private:
     * @brief Writes a WAV file to system
     */
     void WriteWAVFile(std::shared_ptr<BaseChunk> pBaseChunk);
+
+    /*
+    * @brief Creates file path if it does not exist
+    */
+    void CreateFilePath();
 
 protected:
     /*

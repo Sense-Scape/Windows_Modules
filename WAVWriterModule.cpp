@@ -3,7 +3,8 @@
 WAVWriterModule::WAVWriterModule(std::string sFileWritePath, unsigned uMaxInputBufferSize) : BaseModule(uMaxInputBufferSize),
 m_sFileWritePath(sFileWritePath)
 {
-
+	// Creating file path for audio files if it does not exist
+	CreateFilePath();
 }
 
 void WAVWriterModule::WriteWAVFile(std::shared_ptr<BaseChunk> pBaseChunk)
@@ -28,7 +29,7 @@ void WAVWriterModule::WriteWAVFile(std::shared_ptr<BaseChunk> pBaseChunk)
 	fwrite(&pvcWAVHeaderBytes->at(0), sizeof(char), (*pvcWAVHeaderBytes).size(), WAVRecordingFile);
 
 	// Writing data - data - bytes - size of
-	fwrite(&(pWAVChunk->m_vfData[0]), pWAVChunk->m_sWAVHeader.bitsPerSample / 8, pWAVChunk->m_vfData.size(), WAVRecordingFile);
+	fwrite(&(pWAVChunk->m_vi16Data[0]), pWAVChunk->m_sWAVHeader.bitsPerSample / 8, pWAVChunk->m_vi16Data.size(), WAVRecordingFile);
 
 	// Closing file
 	fclose(WAVRecordingFile);
@@ -38,4 +39,12 @@ void WAVWriterModule::WriteWAVFile(std::shared_ptr<BaseChunk> pBaseChunk)
 void WAVWriterModule::Process(std::shared_ptr<BaseChunk> pBaseChunk)
 {
 	WriteWAVFile(pBaseChunk);
+}
+
+void WAVWriterModule::CreateFilePath()
+{
+	if (!std::filesystem::exists(m_sFileWritePath)) {
+		std::filesystem::create_directory(m_sFileWritePath);
+		std::cout << "Folder created successfully - " + m_sFileWritePath << std::endl;
+	}
 }
