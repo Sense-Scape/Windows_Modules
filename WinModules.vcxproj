@@ -152,10 +152,12 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="WAVWriterModule.cpp" />
+    <ClCompile Include="WinTCPRxModule.cpp" />
     <ClCompile Include="WinUDPRxModule.cpp" />
     <ClCompile Include="WinUDPTxModule.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="include\WinTCPRxModule.h" />
     <ClInclude Include="WAVWriterModule.h" />
     <ClInclude Include="include/WinUDPRxModule.h" />
     <ClInclude Include="include/WinUDPTxModule.h" />

@@ -24,6 +24,9 @@
     <ClCompile Include="WAVWriterModule.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="WinTCPRxModule.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include/WinUDPRxModule.h">
@@ -33,6 +36,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="WAVWriterModule.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\WinTCPRxModule.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
