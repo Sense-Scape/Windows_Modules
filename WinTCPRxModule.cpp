@@ -121,6 +121,7 @@ void WinTCPRxModule::StartClientThread(SOCKET &clientSocket)
 			while (vcAccumulatedBytes.size() < 2048)
 			{
 				std::vector<char> vcByteData;
+				vcByteData.resize(512);
 				unsigned uReceivedDataLength = recv(clientSocket, &vcByteData[0], 512, 0);
 
 				// Lets pseudo error check
