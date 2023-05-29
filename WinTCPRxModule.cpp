@@ -99,15 +99,11 @@ void WinTCPRxModule::Process(std::shared_ptr<BaseChunk> pBaseChunk)
 
 void WinTCPRxModule::StartClientThread(SOCKET &clientSocket) 
 {
-	std::unique_lock<std::mutex> ProcessLock(m_ProcessStateMutex);
-
 	std::vector<char> vcAccumulatedBytes;
 	vcAccumulatedBytes.reserve(512);
 
 	while (!m_bShutDown)
 	{
-		ProcessLock.unlock();
-
 		// Wait for data to be available on the socket
 		fd_set readfds;
 		FD_ZERO(&readfds);
@@ -158,7 +154,6 @@ void WinTCPRxModule::StartClientThread(SOCKET &clientSocket)
 			TryPassChunk(std::dynamic_pointer_cast<BaseChunk>(pUDPDataChunk));
 			
 		}
-		ProcessLock.lock();
 	}
 
 	closesocket(clientSocket);
