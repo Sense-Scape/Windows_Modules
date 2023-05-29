@@ -80,12 +80,8 @@ void WinTCPRxModule::ConnectTCPSocket()
 
 void WinTCPRxModule::Process(std::shared_ptr<BaseChunk> pBaseChunk)
 {
-	std::unique_lock<std::mutex> ProcessLock(m_ProcessStateMutex);
-
 	while (!m_bShutDown)
 	{
-		ProcessLock.unlock();
-
 		// A blocking wait to look for new TCP clients
 		SOCKET clientSocket = accept(m_WinSocket, NULL, NULL);
 		if (clientSocket == INVALID_SOCKET) {
@@ -98,8 +94,6 @@ void WinTCPRxModule::Process(std::shared_ptr<BaseChunk> pBaseChunk)
 
 		// detach the thread so it can run a receive process
 		clientThread.detach();
-
-		ProcessLock.lock();
 	}
 }
 
