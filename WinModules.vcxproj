@@ -59,15 +59,27 @@
   </ImportGroup>
   <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="WinModules.props" />
+    <Import Project="components\Base_Module\BaseModule.props" />
+    <Import Project="components\Base_Module\components\Chunk_Types\ChunkTypes.props" />
   </ImportGroup>
   <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="WinModules.props" />
+    <Import Project="components\Base_Module\BaseModule.props" />
+    <Import Project="components\Base_Module\components\Chunk_Types\ChunkTypes.props" />
   </ImportGroup>
   <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="WinModules.props" />
+    <Import Project="components\Base_Module\BaseModule.props" />
+    <Import Project="components\Base_Module\components\Chunk_Types\ChunkTypes.props" />
   </ImportGroup>
   <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="WinModules.props" />
+    <Import Project="components\Base_Module\BaseModule.props" />
+    <Import Project="components\Base_Module\components\Chunk_Types\ChunkTypes.props" />
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
@@ -151,24 +163,16 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="WAVWriterModule.cpp" />
-    <ClCompile Include="WinTCPRxModule.cpp" />
-    <ClCompile Include="WinUDPRxModule.cpp" />
-    <ClCompile Include="WinUDPTxModule.cpp" />
-  </ItemGroup>
-  <ItemGroup>
     <ClInclude Include="include\WinTCPRxModule.h" />
     <ClInclude Include="WAVWriterModule.h" />
     <ClInclude Include="include/WinUDPRxModule.h" />
     <ClInclude Include="include/WinUDPTxModule.h" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\Base_Module\BaseModule.vcxproj">
-      <Project>{36fd5345-1eb3-4a92-8f96-a07cc3fa8e32}</Project>
-    </ProjectReference>
-    <ProjectReference Include="..\Chunk_Types\ChunkTypes.vcxproj">
-      <Project>{5583b73c-eb54-4cb6-86e1-439a4b9a9315}</Project>
-    </ProjectReference>
+    <ClCompile Include="source\WAVWriterModule.cpp" />
+    <ClCompile Include="source\WinTCPRxModule.cpp" />
+    <ClCompile Include="source\WinUDPRxModule.cpp" />
+    <ClCompile Include="source\WinUDPTxModule.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
