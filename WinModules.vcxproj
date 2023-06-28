@@ -164,6 +164,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="include\WinTCPRxModule.h" />
+    <ClInclude Include="include\WinTCPTxModule.h" />
     <ClInclude Include="WAVWriterModule.h" />
     <ClInclude Include="include/WinUDPRxModule.h" />
     <ClInclude Include="include/WinUDPTxModule.h" />
@@ -171,6 +172,7 @@
   <ItemGroup>
     <ClCompile Include="source\WAVWriterModule.cpp" />
     <ClCompile Include="source\WinTCPRxModule.cpp" />
+    <ClCompile Include="source\WinTCPTxModule.cpp" />
     <ClCompile Include="source\WinUDPRxModule.cpp" />
     <ClCompile Include="source\WinUDPTxModule.cpp" />
   </ItemGroup>
