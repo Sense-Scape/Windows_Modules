@@ -100,7 +100,9 @@ void WinTCPRxModule::Process(std::shared_ptr<BaseChunk> pBaseChunk)
 void WinTCPRxModule::StartClientThread(SOCKET &clientSocket) 
 {
 	std::vector<char> vcAccumulatedBytes;
-	vcAccumulatedBytes.reserve(512);
+	vcAccumulatedBytes.reserve(2048);
+
+	bool bReadError = false;
 
 	while (!m_bShutDown)
 	{
@@ -131,7 +133,13 @@ void WinTCPRxModule::StartClientThread(SOCKET &clientSocket)
 					// connection closed, too handle
 					std::cout << "connection closed, too handle" << std::endl;
 
-				// And then store data
+				// And then try store data
+				if (uReceivedDataLength > vcByteData.size())
+				{
+					std::cout << "Closed connection to " + m_sTCPPort + ": received data length shorter than actual received data" << std::endl;
+					bReadError = true;
+					break;
+				}
 				for (int i = 0; i < uReceivedDataLength; i++)
 					vcAccumulatedBytes.emplace_back(vcByteData[i]);
 			}
@@ -155,6 +163,8 @@ void WinTCPRxModule::StartClientThread(SOCKET &clientSocket)
 			TryPassChunk(std::dynamic_pointer_cast<BaseChunk>(pUDPDataChunk));
 			
 		}
+		if (bReadError)
+			break;
 	}
 
 	closesocket(clientSocket);
