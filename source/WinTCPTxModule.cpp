@@ -9,7 +9,6 @@ WinTCPTxModule::WinTCPTxModule(std::string sIPAddress, std::string sTCPPort, uns
 	m_SocketStruct(),
 	m_bTCPConnected()
 {
-	ConnectTCPSocket();
 }
 
 WinTCPTxModule::~WinTCPTxModule()
@@ -47,6 +46,7 @@ void WinTCPTxModule::ConnectTCPSocket()
 
 }
 
+
 void WinTCPTxModule::Process(std::shared_ptr<BaseChunk> pBaseChunk)
 {
 	// Constantly looking for new connections and stating client threads
@@ -56,12 +56,15 @@ void WinTCPTxModule::Process(std::shared_ptr<BaseChunk> pBaseChunk)
 	{
 		if (!m_bTCPConnected)
 		{
+			ConnectTCPSocket();
+
 			std::cout << "Connecting to Server at ip " + m_sDestinationIPAddress + " on port " + m_sTCPPort << std::endl;
 
 			// Lets start by creating the sock addr
 			sockaddr_in sockaddr;
 			sockaddr.sin_family = AF_INET;
 			sockaddr.sin_port = htons(stoi(m_sTCPPort));
+
 
 			// Lets then convert an IPv4 or IPv6 to its binary representation
 			if (inet_pton(AF_INET, m_sDestinationIPAddress.c_str(), &(sockaddr.sin_addr)) <= 0) {
@@ -93,7 +96,9 @@ void WinTCPTxModule::Process(std::shared_ptr<BaseChunk> pBaseChunk)
 		}
 		else
 		{
+			// While we are already connected lets just put the thread to sleep
 			std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+			std::cout << "here" << std::endl;
 		}
 	}
 }
