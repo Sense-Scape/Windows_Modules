@@ -44,13 +44,7 @@ void WinUDPRxModule::ConnectUDPSocket()
 	m_SocketStruct.sin_addr.s_addr = INADDR_ANY; // Not used therefore not set
 	m_SocketStruct.sin_port = htons(std::stoi(m_sUDPPort));
 
-	if (bind(m_WinSocket, (struct sockaddr*)&m_SocketStruct, sizeof(m_SocketStruct)) == SOCKET_ERROR)
-	{
-		printf("Bind failed with error code : %d", WSAGetLastError());
-		exit(EXIT_FAILURE);
-	}
-
-	std::cout << "Socket binding complete: IP: " + m_sIPAddress + " Port: " + m_sUDPPort + " \n";
+	std::cout << "UDP Socket created: IP: " + m_sIPAddress + " Port: " + m_sUDPPort + " \n";
 }
 
 void WinUDPRxModule::Process(std::shared_ptr<BaseChunk> pBaseChunk)
