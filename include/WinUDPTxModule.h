@@ -11,6 +11,7 @@
 /*Custom Includes*/
 #include "BaseModule.h"
 #include "UDPChunk.h"
+#include "TimeChunk.h"
 
 
 /**
