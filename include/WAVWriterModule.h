@@ -8,6 +8,7 @@
 
 /*Custom Includes*/
 #include "BaseModule.h"
+#include "WAVChunk.h"
 
 class WAVWriterModule :
     public BaseModule

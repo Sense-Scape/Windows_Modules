@@ -21,13 +21,13 @@
     <ClInclude Include="include/WinUDPTxModule.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="WAVWriterModule.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="include\WinTCPRxModule.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="include\WinTCPTxModule.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\WAVWriterModule.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
