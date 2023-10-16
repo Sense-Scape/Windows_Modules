@@ -45,6 +45,7 @@ void WAVWriterModule::CreateFilePath()
 {
 	if (!std::filesystem::exists(m_sFileWritePath)) {
 		std::filesystem::create_directory(m_sFileWritePath);
-		std::cout << "Folder created successfully - " + m_sFileWritePath << std::endl;
+		std::string strInfo = std::string(__FUNCTION__) + ": Folder created successfully - " + m_sFileWritePath;
+		PLOG_INFO << strInfo;
 	}
 }
