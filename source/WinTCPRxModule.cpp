@@ -23,14 +23,16 @@ void WinTCPRxModule::ConnectTCPSocket()
 	// Configuring Web Security Appliance
 	if (WSAStartup(MAKEWORD(2, 2), &m_WSA) != 0)
 	{
-		std::cout << "Windows TCP socket WSA Error. Error Code : " + std::to_string(WSAGetLastError()) + "\n";
+		std::string strError = std::string(__FUNCTION__) + "Windows TCP socket WSA Error. Error Code : " + std::to_string(WSAGetLastError()) + "\n";
+		PLOG_ERROR << strError;
 		throw;
 	}
 
 	// Configuring protocol to TCP
 	if ((m_WinSocket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP)) == INVALID_SOCKET)
 	{
-		std::cout << "Windows TCP socket WSA Error. INVALID_SOCKET \n";
+		std::string strError = "Windows TCP socket WSA Error. INVALID_SOCKET \n";
+		PLOG_ERROR << strError;
 		throw;
 	}
 
@@ -51,7 +53,8 @@ void WinTCPRxModule::ConnectTCPSocket()
 	localAddr.sin_port = htons(stoi(m_sTCPPort)); // 
 
 	if (bind(m_WinSocket, (sockaddr*)&localAddr, sizeof(localAddr)) == SOCKET_ERROR) {
-		std::cerr << "bind failed" << std::endl;
+		std::string strError = std::string(__FUNCTION__) +  ": Bind failed \n";
+		PLOG_ERROR << strError;
 		closesocket(m_WinSocket);
 		WSACleanup();
 		throw;
@@ -60,7 +63,8 @@ void WinTCPRxModule::ConnectTCPSocket()
 	// Set the socket to blocking mode
 	u_long mode = 0; // 0 for blocking, non-zero for non-blocking
 	if (ioctlsocket(m_WinSocket, FIONBIO, &mode) == SOCKET_ERROR) {
-		std::cerr << "ioctlsocket failed with error: " << WSAGetLastError() << std::endl;
+		std::string strError = std::string(__FUNCTION__) + " ioctlsocket failed with error: " + std::to_string(WSAGetLastError());
+		PLOG_ERROR << strError;
 		closesocket(m_WinSocket);
 		WSACleanup();
 		return;
@@ -69,13 +73,15 @@ void WinTCPRxModule::ConnectTCPSocket()
 
 	// Start listening on socket
 	if (listen(m_WinSocket, SOMAXCONN) == SOCKET_ERROR) {
-		std::cout << "Error listening on server socket. Error code: " << WSAGetLastError() << "\n";
+		std::string strError = std::string(__FUNCTION__) + ": Error listening on server socket. Error code: " + std::to_string(WSAGetLastError()) + " \n";
+		PLOG_ERROR << strError;
 		closesocket(m_WinSocket);
 		WSACleanup();
 		throw;
 	}
 
-	std::cout << "Socket binding complete: IP: " + m_sIPAddress + " Port: " + m_sTCPPort + " \n";
+	std::string strInfo = std::string(__FUNCTION__) + ": Socket binding complete: IP: " + m_sIPAddress + " Port: " + m_sTCPPort + " \n";
+	PLOG_INFO << strInfo;
 }
 
 void WinTCPRxModule::Process(std::shared_ptr<BaseChunk> pBaseChunk)
@@ -85,10 +91,13 @@ void WinTCPRxModule::Process(std::shared_ptr<BaseChunk> pBaseChunk)
 		// A blocking wait to look for new TCP clients
 		SOCKET clientSocket = accept(m_WinSocket, NULL, NULL);
 		if (clientSocket == INVALID_SOCKET) {
-			std::cout << "Error accepting client connection. Error code: " << WSAGetLastError() << "\n";
+			std::string strWarning = std::string(__FUNCTION__) + ": Error accepting client connection. Error code: " + std::to_string(WSAGetLastError()) + "\n";
+			PLOG_WARNING  << strWarning;
 			continue;
 		}
-		std::cout << "Accepted client connection. Client socket: " << clientSocket << "\n";
+
+		std::string strInfo = std::string(__FUNCTION__) + ": Accepted client connection. Client socket: " + std::to_string(clientSocket) + "\n";
+		PLOG_WARNING << strInfo;
 
 		std::thread clientThread([this, &clientSocket]{ StartClientThread(clientSocket); } );
 
@@ -112,7 +121,8 @@ void WinTCPRxModule::StartClientThread(SOCKET &clientSocket)
 		FD_SET(clientSocket, &readfds);
 		int num_ready = select(clientSocket + 1, &readfds, NULL, NULL, NULL);
 		if (num_ready < 0) {
-			std::cerr << "Failed to wait for data on socket" << std::endl;
+			std::string strWarning = std::string(__FUNCTION__) + ": Failed to wait for data on socket \n";
+			PLOG_WARNING << strWarning;
 			continue;
 		}
 
@@ -128,15 +138,23 @@ void WinTCPRxModule::StartClientThread(SOCKET &clientSocket)
 
 				// Lets pseudo error check
 				if (uReceivedDataLength == -1)
-					std::cout << "recv() failed with error code : " + WSAGetLastError() << std::endl;
+				{
+					std::string strWarning = std::string(__FUNCTION__) + ": recv() failed with error code : " + std::to_string(WSAGetLastError()) + " \n";
+					PLOG_WARNING << strWarning;
+				}
 				else if (uReceivedDataLength == 0)
+				{
 					// connection closed, too handle
-					std::cout << "connection closed, too handle" << std::endl;
+					std::string strWarning = std::string(__FUNCTION__) + ": connection closed, too handle \n";
+					PLOG_WARNING << strWarning;
+				}
+					
 
 				// And then try store data
 				if (uReceivedDataLength > vcByteData.size())
 				{
-					std::cout << "Closed connection to " + m_sTCPPort + ": received data length shorter than actual received data" << std::endl;
+					std::string strWarning = std::string(__FUNCTION__) + ": Closed connection to " + m_sTCPPort + ": received data length shorter than actual received data \n";
+					PLOG_WARNING << strWarning;
 					bReadError = true;
 					break;
 				}
