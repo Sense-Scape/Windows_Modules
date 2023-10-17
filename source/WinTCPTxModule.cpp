@@ -21,7 +21,7 @@ void WinTCPTxModule::ConnectTCPSocket()
 	// Configuring Web Security Appliance
 	if (WSAStartup(MAKEWORD(2, 2), &m_WSA) != 0)
 	{
-		std::string strError = std::string(__FUNCTION__) + "Windows TCP socket WSA Error. Error Code : " + std::to_string(WSAGetLastError()) + "\n";
+		std::string strError = std::string(__FUNCTION__) + "Windows TCP socket WSA Error. Error Code : " + std::to_string(WSAGetLastError()) + "";
 		PLOG_ERROR << strError;
 		throw;
 	}
@@ -29,7 +29,7 @@ void WinTCPTxModule::ConnectTCPSocket()
 	// Configuring protocol to TCP
 	if ((m_WinSocket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP)) == INVALID_SOCKET)
 	{
-		std::string strError = std::string(__FUNCTION__) + ":Windows TCP socket WSA Error. INVALID_SOCKET \n";
+		std::string strError = std::string(__FUNCTION__) + ":Windows TCP socket WSA Error. INVALID_SOCKET ";
 		PLOG_ERROR << strError;
 		throw;
 	}
@@ -60,7 +60,7 @@ void WinTCPTxModule::Process(std::shared_ptr<BaseChunk> pBaseChunk)
 		{
 			ConnectTCPSocket();
 
-			std::string strInfo = std::string(__FUNCTION__) + ": Connecting to Server at ip " + m_sDestinationIPAddress + " on port " + m_sTCPPort + "\n";
+			std::string strInfo = std::string(__FUNCTION__) + ": Connecting to Server at ip " + m_sDestinationIPAddress + " on port " + m_sTCPPort + "";
 			PLOG_INFO << strInfo;
 
 			// Lets start by creating the sock addr
@@ -72,7 +72,7 @@ void WinTCPTxModule::Process(std::shared_ptr<BaseChunk> pBaseChunk)
 			// Lets then convert an IPv4 or IPv6 to its binary representation
 			if (inet_pton(AF_INET, m_sDestinationIPAddress.c_str(), &(sockaddr.sin_addr)) <= 0)
 			{
-				std::string strWarning = std::string(__FUNCTION__) + ": Invalid IP address \n";
+				std::string strWarning = std::string(__FUNCTION__) + ": Invalid IP address ";
 				PLOG_WARNING << strWarning;
 				return;
 			}
@@ -81,7 +81,7 @@ void WinTCPTxModule::Process(std::shared_ptr<BaseChunk> pBaseChunk)
 			SOCKET clientSocket = socket(AF_INET, SOCK_STREAM, 0);
 			if (clientSocket == INVALID_SOCKET) 
 			{
-				std::string strWarning = std::string(__FUNCTION__) + ": Failed to create socket. Error code: " +  std::to_string(WSAGetLastError()) + "\n";
+				std::string strWarning = std::string(__FUNCTION__) + ": Failed to create socket. Error code: " +  std::to_string(WSAGetLastError()) + "";
 				PLOG_WARNING << strWarning;
 				return;
 			}
@@ -89,7 +89,7 @@ void WinTCPTxModule::Process(std::shared_ptr<BaseChunk> pBaseChunk)
 			// Then lets do a blocking call to try connect
 			if (connect(clientSocket, (struct sockaddr*)&sockaddr, sizeof(sockaddr)) != SOCKET_ERROR) 
 			{
-				std::string strInfo = std::string(__FUNCTION__) + ": Connected to server at ip " + m_sDestinationIPAddress + " on port " + m_sTCPPort + "\n";
+				std::string strInfo = std::string(__FUNCTION__) + ": Connected to server at ip " + m_sDestinationIPAddress + " on port " + m_sTCPPort + "";
 				PLOG_INFO << strInfo;
 
 				// And update connection state and spin of the processing thread
@@ -150,7 +150,7 @@ void WinTCPTxModule::RunClientThread(SOCKET& clientSocket)
 
 	// In the case of stopping processing or an error we
 	// formally close the socket and update state variable
-	std::string strInfo = std::string(__FUNCTION__) + ": Closing TCP Socket at ip " + m_sDestinationIPAddress + " on port " + m_sTCPPort + "\n";
+	std::string strInfo = std::string(__FUNCTION__) + ": Closing TCP Socket at ip " + m_sDestinationIPAddress + " on port " + m_sTCPPort + "";
 	PLOG_INFO << strInfo;
 
 	CloseTCPSocket(clientSocket);
