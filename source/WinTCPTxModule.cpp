@@ -21,14 +21,16 @@ void WinTCPTxModule::ConnectTCPSocket()
 	// Configuring Web Security Appliance
 	if (WSAStartup(MAKEWORD(2, 2), &m_WSA) != 0)
 	{
-		std::cout << "Windows TCP socket WSA Error. Error Code : " + std::to_string(WSAGetLastError()) + "\n";
+		std::string strError = std::string(__FUNCTION__) + "Windows TCP socket WSA Error. Error Code : " + std::to_string(WSAGetLastError()) + "\n";
+		PLOG_ERROR << strError;
 		throw;
 	}
 
 	// Configuring protocol to TCP
 	if ((m_WinSocket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP)) == INVALID_SOCKET)
 	{
-		std::cout << "Windows TCP socket WSA Error. INVALID_SOCKET \n";
+		std::string strError = std::string(__FUNCTION__) + ":Windows TCP socket WSA Error. INVALID_SOCKET \n";
+		PLOG_ERROR << strError;
 		throw;
 	}
 
@@ -58,7 +60,8 @@ void WinTCPTxModule::Process(std::shared_ptr<BaseChunk> pBaseChunk)
 		{
 			ConnectTCPSocket();
 
-			std::cout << "Connecting to Server at ip " + m_sDestinationIPAddress + " on port " + m_sTCPPort << std::endl;
+			std::string strInfo = std::string(__FUNCTION__) + ": Connecting to Server at ip " + m_sDestinationIPAddress + " on port " + m_sTCPPort + "\n";
+			PLOG_INFO << strInfo;
 
 			// Lets start by creating the sock addr
 			sockaddr_in sockaddr;
@@ -67,22 +70,28 @@ void WinTCPTxModule::Process(std::shared_ptr<BaseChunk> pBaseChunk)
 
 
 			// Lets then convert an IPv4 or IPv6 to its binary representation
-			if (inet_pton(AF_INET, m_sDestinationIPAddress.c_str(), &(sockaddr.sin_addr)) <= 0) {
-				std::cout << "Invalid IP address." << std::endl;
+			if (inet_pton(AF_INET, m_sDestinationIPAddress.c_str(), &(sockaddr.sin_addr)) <= 0)
+			{
+				std::string strWarning = std::string(__FUNCTION__) + ": Invalid IP address \n";
+				PLOG_WARNING << strWarning;
 				return;
 			}
 
 			// And then make the socket
 			SOCKET clientSocket = socket(AF_INET, SOCK_STREAM, 0);
-			if (clientSocket == INVALID_SOCKET) {
-				std::cout << "Failed to create socket. Error code: " << WSAGetLastError() << std::endl;
+			if (clientSocket == INVALID_SOCKET) 
+			{
+				std::string strWarning = std::string(__FUNCTION__) + ": Failed to create socket. Error code: " +  std::to_string(WSAGetLastError()) + "\n";
+				PLOG_WARNING << strWarning;
 				return;
 			}
 
 			// Then lets do a blocking call to try connect
-			if (connect(clientSocket, (struct sockaddr*)&sockaddr, sizeof(sockaddr)) != SOCKET_ERROR) {
-				std::cout << "Connected to server at ip " + m_sDestinationIPAddress + " on port " + m_sTCPPort << std::endl;
-				
+			if (connect(clientSocket, (struct sockaddr*)&sockaddr, sizeof(sockaddr)) != SOCKET_ERROR) 
+			{
+				std::string strInfo = std::string(__FUNCTION__) + ": Connected to server at ip " + m_sDestinationIPAddress + " on port " + m_sTCPPort + "\n";
+				PLOG_INFO << strInfo;
+
 				// And update connection state and spin of the processing thread
 				m_bTCPConnected = true;
 				std::thread clientThread([this, &clientSocket] { RunClientThread(clientSocket); });
@@ -90,7 +99,8 @@ void WinTCPTxModule::Process(std::shared_ptr<BaseChunk> pBaseChunk)
 			}
 			else
 			{
-				std::cout << "Failed to connect to the server. Error code: " << WSAGetLastError() << std::endl;
+				std::string strWarning = std::string(__FUNCTION__) + ": Failed to connect to the server.Error code :" + std::to_string(WSAGetLastError());
+				PLOG_WARNING << strWarning;
 				closesocket(clientSocket);
 			}
 		}
@@ -98,7 +108,6 @@ void WinTCPTxModule::Process(std::shared_ptr<BaseChunk> pBaseChunk)
 		{
 			// While we are already connected lets just put the thread to sleep
 			std::this_thread::sleep_for(std::chrono::milliseconds(1000));
-			std::cout << "here" << std::endl;
 		}
 	}
 }
@@ -141,7 +150,9 @@ void WinTCPTxModule::RunClientThread(SOCKET& clientSocket)
 
 	// In the case of stopping processing or an error we
 	// formally close the socket and update state variable
-	std::cout << "Closing TCP socket" << std::endl;;
+	std::string strInfo = std::string(__FUNCTION__) + ": Closing TCP Socket at ip " + m_sDestinationIPAddress + " on port " + m_sTCPPort + "\n";
+	PLOG_INFO << strInfo;
+
 	CloseTCPSocket(clientSocket);
 	m_bTCPConnected = false;
 }
