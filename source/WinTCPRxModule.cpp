@@ -5,11 +5,11 @@ BaseModule(uMaxInputBufferSize),
 m_sIPAddress(sIPAddress),																																
 m_sTCPPort(sTCPPort),																																
 m_iDatagramSize(iDatagramSize),
-m_WinSocket(),																																	
+m_WinPortAllocatorSocket(),
 m_WSA(),																																
 m_SocketStruct()
 {
-	ConnectTCPSocket();
+	ConnectTCPSocket(m_WinPortAllocatorSocket, m_sTCPPort);
 
 }
 
@@ -18,7 +18,7 @@ WinTCPRxModule::~WinTCPRxModule()
 	CloseTCPSocket();
 }
 
-void WinTCPRxModule::ConnectTCPSocket()
+void WinTCPRxModule::ConnectTCPSocket(SOCKET& WinSocket, std::string &strTCPPort)
 {
 	// Configuring Web Security Appliance
 	if (WSAStartup(MAKEWORD(2, 2), &m_WSA) != 0)
@@ -29,7 +29,7 @@ void WinTCPRxModule::ConnectTCPSocket()
 	}
 
 	// Configuring protocol to TCP
-	if ((m_WinSocket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP)) == INVALID_SOCKET)
+	if ((WinSocket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP)) == INVALID_SOCKET)
 	{
 		std::string strError = "Windows TCP socket WSA Error. INVALID_SOCKET ";
 		PLOG_ERROR << strError;
@@ -37,12 +37,12 @@ void WinTCPRxModule::ConnectTCPSocket()
 	}
 
 	int optval = 1;
-	if (setsockopt(m_WinSocket, SOL_SOCKET, SO_REUSEADDR, (char*)&optval, sizeof(optval)) == SOCKET_ERROR) {
+	if (setsockopt(WinSocket, SOL_SOCKET, SO_REUSEADDR, (char*)&optval, sizeof(optval)) == SOCKET_ERROR) {
 		// Handle error
 	}
 
 	int optlen = sizeof(optval);
-	if (setsockopt(m_WinSocket, SOL_SOCKET, SO_KEEPALIVE, (char*)&optval, optlen) < 0) {
+	if (setsockopt(WinSocket, SOL_SOCKET, SO_KEEPALIVE, (char*)&optval, optlen) < 0) {
 		return;
 	}
 
@@ -50,32 +50,32 @@ void WinTCPRxModule::ConnectTCPSocket()
 	sockaddr_in localAddr;
 	localAddr.sin_family = AF_INET;
 	localAddr.sin_addr.s_addr = INADDR_ANY; // Accept connections on any local IP address
-	localAddr.sin_port = htons(stoi(m_sTCPPort)); // 
+	localAddr.sin_port = htons(stoi(strTCPPort)); // 
 
-	if (bind(m_WinSocket, (sockaddr*)&localAddr, sizeof(localAddr)) == SOCKET_ERROR) {
+	if (bind(WinSocket, (sockaddr*)&localAddr, sizeof(localAddr)) == SOCKET_ERROR) {
 		std::string strError = std::string(__FUNCTION__) +  ": Bind failed ";
 		PLOG_ERROR << strError;
-		closesocket(m_WinSocket);
+		closesocket(WinSocket);
 		WSACleanup();
 		throw;
 	}
 
 	// Set the socket to blocking mode
 	u_long mode = 0; // 0 for blocking, non-zero for non-blocking
-	if (ioctlsocket(m_WinSocket, FIONBIO, &mode) == SOCKET_ERROR) {
+	if (ioctlsocket(WinSocket, FIONBIO, &mode) == SOCKET_ERROR) {
 		std::string strError = std::string(__FUNCTION__) + " ioctlsocket failed with error: " + std::to_string(WSAGetLastError());
 		PLOG_ERROR << strError;
-		closesocket(m_WinSocket);
+		closesocket(WinSocket);
 		WSACleanup();
 		return;
 	}
 
 
 	// Start listening on socket
-	if (listen(m_WinSocket, SOMAXCONN) == SOCKET_ERROR) {
+	if (listen(WinSocket, SOMAXCONN) == SOCKET_ERROR) {
 		std::string strError = std::string(__FUNCTION__) + ": Error listening on server socket. Error code: " + std::to_string(WSAGetLastError()) + " ";
 		PLOG_ERROR << strError;
-		closesocket(m_WinSocket);
+		closesocket(WinSocket);
 		WSACleanup();
 		throw;
 	}
@@ -89,7 +89,7 @@ void WinTCPRxModule::Process(std::shared_ptr<BaseChunk> pBaseChunk)
 	while (!m_bShutDown)
 	{
 		// A blocking wait to look for new TCP clients
-		SOCKET clientSocket = accept(m_WinSocket, NULL, NULL);
+		SOCKET clientSocket = accept(m_WinPortAllocatorSocket, NULL, NULL);
 		if (clientSocket == INVALID_SOCKET) {
 			std::string strWarning = std::string(__FUNCTION__) + ": Error accepting client connection. Error code: " + std::to_string(WSAGetLastError()) + "";
 			PLOG_WARNING  << strWarning;
@@ -190,7 +190,7 @@ void WinTCPRxModule::StartClientThread(SOCKET &clientSocket)
 
 void WinTCPRxModule::CloseTCPSocket()
 {
-	closesocket(m_WinSocket);
+	closesocket(m_WinPortAllocatorSocket);
 	WSACleanup();
 }
 
