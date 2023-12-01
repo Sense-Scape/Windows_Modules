@@ -7,10 +7,8 @@ m_sTCPPort(sTCPPort),
 m_iDatagramSize(iDatagramSize),
 m_WinPortAllocatorSocket(),
 m_WSA(),																																
-m_SocketStruct()
 {
 	ConnectTCPSocket(m_WinPortAllocatorSocket, m_sTCPPort);
-
 }
 
 WinTCPRxModule::~WinTCPRxModule()
@@ -99,6 +97,7 @@ void WinTCPRxModule::Process(std::shared_ptr<BaseChunk> pBaseChunk)
 		std::string strInfo = std::string(__FUNCTION__) + ": Accepted client connection. Client socket: " + std::to_string(clientSocket) + "";
 		PLOG_WARNING << strInfo;
 
+		// 
 		std::thread clientThread([this, &clientSocket]{ StartClientThread(clientSocket); } );
 
 		// detach the thread so it can run a receive process
