@@ -6,7 +6,8 @@ m_sIPAddress(sIPAddress),
 m_sTCPPort(sTCPPort),																																
 m_iDatagramSize(iDatagramSize),
 m_WinPortAllocatorSocket(),
-m_WSA(),																																
+m_WSA(),
+m_u16LifeTimeConnectionCount()
 {
 	ConnectTCPSocket(m_WinPortAllocatorSocket, m_sTCPPort);
 }
@@ -87,22 +88,50 @@ void WinTCPRxModule::Process(std::shared_ptr<BaseChunk> pBaseChunk)
 	while (!m_bShutDown)
 	{
 		// A blocking wait to look for new TCP clients
-		SOCKET clientSocket = accept(m_WinPortAllocatorSocket, NULL, NULL);
-		if (clientSocket == INVALID_SOCKET) {
+		SOCKET AllocatorSocket = accept(m_WinPortAllocatorSocket, NULL, NULL);
+		if (AllocatorSocket == INVALID_SOCKET) {
 			std::string strWarning = std::string(__FUNCTION__) + ": Error accepting client connection. Error code: " + std::to_string(WSAGetLastError()) + "";
 			PLOG_WARNING  << strWarning;
 			continue;
 		}
 
-		std::string strInfo = std::string(__FUNCTION__) + ": Accepted client connection. Client socket: " + std::to_string(clientSocket) + "";
+		std::string strInfo = std::string(__FUNCTION__) + ": Accepted client connection. Client socket: " + std::to_string(m_WinPortAllocatorSocket) + "";
 		PLOG_WARNING << strInfo;
 
-		// 
-		std::thread clientThread([this, &clientSocket]{ StartClientThread(clientSocket); } );
 
-		// detach the thread so it can run a receive process
-		clientThread.detach();
+		AllocateAndStartClientProcess(AllocatorSocket);
+		closesocket(AllocatorSocket);
 	}
+}
+
+void WinTCPRxModule::AllocateAndStartClientProcess(SOCKET& clientSocket)
+{
+	// Increment and define port we can allocate to new client to not have port clash
+	m_u16LifeTimeConnectionCount += 1;
+	uint16_t u16BasePortNumber = std::stoi(m_sTCPPort);
+	uint16_t u16AllocatedPortNumber = u16BasePortNumber + m_u16LifeTimeConnectionCount;
+
+
+	SOCKET clientSocket;
+	std::string strAllocatedClientPort = std::to_string(std::stoi(m_sTCPPort) + m_u16LifeTimeConnectionCount);
+	ConnectTCPSocket(clientSocket, strAllocatedClientPort);
+	std::thread clientThread([this, &clientSocket] { StartClientThread(clientSocket); });
+	clientThread.detach();
+
+	// Cast it back to bytes
+	auto vcData = std::vector<char>(sizeof(u16AllocatedPortNumber));
+	memcpy(&vcData[0], &u16AllocatedPortNumber, sizeof(u16AllocatedPortNumber));
+
+	// And then transmit (wohoo!!!)
+	int bytes_sent = send(clientSocket, &vcData[0], vcData.size(), 0);
+	if (bytes_sent < 0) {
+		// An error occurred.
+		std::string strError = std::string(__FUNCTION__) + ": Error transmitting port allocation";
+		PLOG_ERROR << strError;
+	}
+
+	std::string strInfo = std::string(__FUNCTION__) + ": Allocated port " + std::to_string(u16AllocatedPortNumber);
+	PLOG_INFO << strInfo;
 }
 
 void WinTCPRxModule::StartClientThread(SOCKET &clientSocket) 
