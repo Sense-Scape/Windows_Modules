@@ -58,6 +58,12 @@ private:
     int m_iDatagramSize;                ///< Maxmimum TCP buffer length
     SOCKET m_WinPortAllocatorSocket;    ///< Windows socket
     WSADATA m_WSA;                      ///< Web Security Appliance for Windows socket
+    uint16_t m_u16LifeTimeConnectionCount; ///< Number of TCP client connections arcoss time
+
+    /**
+    * @brief function called to start client thread
+    */
+    void AllocateAndStartClientProcess(SOCKET& clientSocket);
 
     /**
      * @brief Creates the windows socket using member variables
