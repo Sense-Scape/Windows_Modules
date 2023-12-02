@@ -64,7 +64,12 @@ private:
     /**
      * @brief Creates the windows socket using member variables
      */
-    void ConnectTCPSocket();
+    void ConnectTCPSocket(SOCKET& WinSocket, std::string& strTCPPort);
+
+    /**
+     * @brief Creates the windows socket using member variables
+     */
+    uint16_t WaitForReturnedPortAllocation(SOCKET& WinSocket);
 
     /*
      * @brief Closes Windows socket

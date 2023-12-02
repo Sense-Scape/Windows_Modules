@@ -16,36 +16,137 @@ WinTCPTxModule::~WinTCPTxModule()
 	CloseTCPSocket(m_WinSocket);
 }
 
-void WinTCPTxModule::ConnectTCPSocket()
+void WinTCPTxModule::ConnectTCPSocket(SOCKET& WinSocket, std::string& strTCPPort)
 {
 	// Configuring Web Security Appliance
 	if (WSAStartup(MAKEWORD(2, 2), &m_WSA) != 0)
 	{
-		std::string strError = std::string(__FUNCTION__) + "Windows TCP socket WSA Error. Error Code : " + std::to_string(WSAGetLastError()) + "";
-		PLOG_ERROR << strError;
+		std::string strFatal = std::string(__FUNCTION__) + "Windows TCP socket WSA Error. Error Code : " + std::to_string(WSAGetLastError()) + "";
+		PLOG_FATAL << strFatal;
 		throw;
 	}
 
 	// Configuring protocol to TCP
-	if ((m_WinSocket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP)) == INVALID_SOCKET)
+	if ((WinSocket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP)) == INVALID_SOCKET)
 	{
-		std::string strError = std::string(__FUNCTION__) + ":Windows TCP socket WSA Error. INVALID_SOCKET ";
-		PLOG_ERROR << strError;
+		std::string strFatal = std::string(__FUNCTION__) + ":Windows TCP socket WSA Error. INVALID_SOCKET ";
+		PLOG_FATAL << strFatal;
 		throw;
 	}
 
 	// Allow address reuse
 	int optval = 1;
-	if (setsockopt(m_WinSocket, SOL_SOCKET, SO_REUSEADDR, (char*)&optval, sizeof(optval)) == SOCKET_ERROR) {
-		// Handle error
+	if (setsockopt(WinSocket, SOL_SOCKET, SO_REUSEADDR, (char*)&optval, sizeof(optval)) == SOCKET_ERROR) {
+		std::string strFatal = std::string(__FUNCTION__) + "UNKOWN ERROR";
+		PLOG_FATAL << strFatal;
+		throw;
 	}
 
 	// Keep the connection open
 	int optlen = sizeof(optval);
-	if (setsockopt(m_WinSocket, SOL_SOCKET, SO_KEEPALIVE, (char*)&optval, optlen) < 0) {
-		return;
+	if (setsockopt(WinSocket, SOL_SOCKET, SO_KEEPALIVE, (char*)&optval, optlen) < 0) {
+		std::string strFatal = std::string(__FUNCTION__) + "UNKOWN ERROR";
+		PLOG_FATAL << strFatal;
+		throw;
 	}
 
+	// Lets start by creating the sock addr
+	sockaddr_in sockaddr;
+	sockaddr.sin_family = AF_INET;
+	sockaddr.sin_port = htons(stoi(strTCPPort));
+
+	std::string strInfo = std::string(__FUNCTION__) + ": Connecting to Server at ip " + m_sDestinationIPAddress + " on port " + m_sTCPPort + "";
+	PLOG_INFO << strInfo;
+
+	// Lets then convert an IPv4 or IPv6 to its binary representation
+	if (inet_pton(AF_INET, m_sDestinationIPAddress.c_str(), &(sockaddr.sin_addr)) <= 0)
+	{
+		std::string strFatal = std::string(__FUNCTION__) + ": Invalid IP address ";
+		PLOG_FATAL << strFatal;
+		throw;
+	}
+
+	// And then make the socket
+	SOCKET clientSocket = socket(AF_INET, SOCK_STREAM, 0);
+	if (clientSocket == INVALID_SOCKET)
+	{
+		std::string strFatal = std::string(__FUNCTION__) + ": Failed to create socket. Error code: " + std::to_string(WSAGetLastError()) + "";
+		PLOG_FATAL << strFatal;
+		throw;
+	}
+
+	// Then lets do a blocking call to try connect
+	if (connect(clientSocket, (struct sockaddr*)&sockaddr, sizeof(sockaddr)) != SOCKET_ERROR)
+	{
+		std::string strInfo = std::string(__FUNCTION__) + ": Connected to server at ip " + m_sDestinationIPAddress + " on port " + m_sTCPPort + "";
+		PLOG_INFO << strInfo;
+		return;
+	}
+	else
+	{
+		std::string strFatal = std::string(__FUNCTION__) + ": Failed to connect to the server.Error code :" + std::to_string(WSAGetLastError());
+		PLOG_FATAL << strFatal;
+		closesocket(clientSocket);
+		throw;
+	}
+}
+
+uint16_t WinTCPTxModule::WaitForReturnedPortAllocation(SOCKET& WinSocket)
+{
+	std::vector<char> vcAccumulatedBytes;
+	vcAccumulatedBytes.reserve(sizeof(uint16_t));
+	bool bReadError;
+
+	// Wait for data to be available on the socket
+	fd_set readfds;
+	FD_ZERO(&readfds);
+	FD_SET(WinSocket, &readfds);
+	int num_ready = select(WinSocket + 1, &readfds, NULL, NULL, NULL);
+	if (num_ready < 0) {
+		std::string strWarning = std::string(__FUNCTION__) + ": Failed to wait for data on socket ";
+		PLOG_WARNING << strWarning;
+	}
+
+	// Read the data from the socket
+	if (FD_ISSET(WinSocket, &readfds))
+	{
+		// Arbitrarily using 2048 and 512
+		while (vcAccumulatedBytes.size() < sizeof(uint16_t))
+		{
+			std::vector<char> vcByteData;
+			vcByteData.resize(sizeof(uint16_t));
+			unsigned uReceivedDataLength = recv(WinSocket, &vcByteData[0], sizeof(uint16_t), 0);
+
+			// Lets pseudo error check
+			if (uReceivedDataLength == -1)
+			{
+				std::string strWarning = std::string(__FUNCTION__) + ": recv() failed with error code : " + std::to_string(WSAGetLastError()) + " ";
+				PLOG_WARNING << strWarning;
+			}
+			else if (uReceivedDataLength == 0)
+			{
+				// connection closed, too handle
+				std::string strWarning = std::string(__FUNCTION__) + ": connection closed, too handle ";
+				PLOG_WARNING << strWarning;
+			}
+
+
+			// And then try store data
+			if (uReceivedDataLength > vcByteData.size())
+			{
+				std::string strWarning = std::string(__FUNCTION__) + ": Closed connection to " + m_sTCPPort + ": received data length shorter than actual received data ";
+				PLOG_WARNING << strWarning;
+				bReadError = true;
+				break;
+			}
+			for (int i = 0; i < uReceivedDataLength; i++)
+				vcAccumulatedBytes.emplace_back(vcByteData[i]);
+		}
+	}
+
+	uint16_t a = 0;
+	memcpy(&a, &vcAccumulatedBytes[0], sizeof(uint16_t));
+	LOG_WARNING << std::to_string(a);
 }
 
 
@@ -58,51 +159,14 @@ void WinTCPTxModule::Process(std::shared_ptr<BaseChunk> pBaseChunk)
 	{
 		if (!m_bTCPConnected)
 		{
-			ConnectTCPSocket();
 
-			std::string strInfo = std::string(__FUNCTION__) + ": Connecting to Server at ip " + m_sDestinationIPAddress + " on port " + m_sTCPPort + "";
-			PLOG_INFO << strInfo;
-
-			// Lets start by creating the sock addr
-			sockaddr_in sockaddr;
-			sockaddr.sin_family = AF_INET;
-			sockaddr.sin_port = htons(stoi(m_sTCPPort));
+			// Get TCP port and conenct to server
+			SOCKET AllocatingServerSocket;
+			auto strTCPPort = m_sTCPPort;
+			ConnectTCPSocket(AllocatingServerSocket, strTCPPort);
+			auto u16AllocatedPort = WaitForReturnedPortAllocation(AllocatingServerSocket);
 
 
-			// Lets then convert an IPv4 or IPv6 to its binary representation
-			if (inet_pton(AF_INET, m_sDestinationIPAddress.c_str(), &(sockaddr.sin_addr)) <= 0)
-			{
-				std::string strWarning = std::string(__FUNCTION__) + ": Invalid IP address ";
-				PLOG_WARNING << strWarning;
-				return;
-			}
-
-			// And then make the socket
-			SOCKET clientSocket = socket(AF_INET, SOCK_STREAM, 0);
-			if (clientSocket == INVALID_SOCKET) 
-			{
-				std::string strWarning = std::string(__FUNCTION__) + ": Failed to create socket. Error code: " +  std::to_string(WSAGetLastError()) + "";
-				PLOG_WARNING << strWarning;
-				return;
-			}
-
-			// Then lets do a blocking call to try connect
-			if (connect(clientSocket, (struct sockaddr*)&sockaddr, sizeof(sockaddr)) != SOCKET_ERROR) 
-			{
-				std::string strInfo = std::string(__FUNCTION__) + ": Connected to server at ip " + m_sDestinationIPAddress + " on port " + m_sTCPPort + "";
-				PLOG_INFO << strInfo;
-
-				// And update connection state and spin of the processing thread
-				m_bTCPConnected = true;
-				std::thread clientThread([this, &clientSocket] { RunClientThread(clientSocket); });
-				clientThread.detach();
-			}
-			else
-			{
-				std::string strWarning = std::string(__FUNCTION__) + ": Failed to connect to the server.Error code :" + std::to_string(WSAGetLastError());
-				PLOG_WARNING << strWarning;
-				closesocket(clientSocket);
-			}
 		}
 		else
 		{

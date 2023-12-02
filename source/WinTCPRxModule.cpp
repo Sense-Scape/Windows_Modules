@@ -69,7 +69,6 @@ void WinTCPRxModule::ConnectTCPSocket(SOCKET& WinSocket, std::string &strTCPPort
 		return;
 	}
 
-
 	// Start listening on socket
 	if (listen(WinSocket, SOMAXCONN) == SOCKET_ERROR) {
 		std::string strError = std::string(__FUNCTION__) + ": Error listening on server socket. Error code: " + std::to_string(WSAGetLastError()) + " ";
@@ -100,11 +99,10 @@ void WinTCPRxModule::Process(std::shared_ptr<BaseChunk> pBaseChunk)
 
 
 		AllocateAndStartClientProcess(AllocatorSocket);
-		closesocket(AllocatorSocket);
 	}
 }
 
-void WinTCPRxModule::AllocateAndStartClientProcess(SOCKET& clientSocket)
+void WinTCPRxModule::AllocateAndStartClientProcess(SOCKET& requestingClientSocket)
 {
 	// Increment and define port we can allocate to new client to not have port clash
 	m_u16LifeTimeConnectionCount += 1;
@@ -112,10 +110,10 @@ void WinTCPRxModule::AllocateAndStartClientProcess(SOCKET& clientSocket)
 	uint16_t u16AllocatedPortNumber = u16BasePortNumber + m_u16LifeTimeConnectionCount;
 
 
-	SOCKET clientSocket;
+	SOCKET allocatedClientSocket;
 	std::string strAllocatedClientPort = std::to_string(std::stoi(m_sTCPPort) + m_u16LifeTimeConnectionCount);
-	ConnectTCPSocket(clientSocket, strAllocatedClientPort);
-	std::thread clientThread([this, &clientSocket] { StartClientThread(clientSocket); });
+	ConnectTCPSocket(allocatedClientSocket, strAllocatedClientPort);
+	std::thread clientThread([this, &allocatedClientSocket] { StartClientThread(allocatedClientSocket); });
 	clientThread.detach();
 
 	// Cast it back to bytes
@@ -123,7 +121,8 @@ void WinTCPRxModule::AllocateAndStartClientProcess(SOCKET& clientSocket)
 	memcpy(&vcData[0], &u16AllocatedPortNumber, sizeof(u16AllocatedPortNumber));
 
 	// And then transmit (wohoo!!!)
-	int bytes_sent = send(clientSocket, &vcData[0], vcData.size(), 0);
+	// using a blocking call to ensure client gets data
+	int bytes_sent = send(requestingClientSocket, &vcData[0], vcData.size(), 0);
 	if (bytes_sent < 0) {
 		// An error occurred.
 		std::string strError = std::string(__FUNCTION__) + ": Error transmitting port allocation";
@@ -132,6 +131,9 @@ void WinTCPRxModule::AllocateAndStartClientProcess(SOCKET& clientSocket)
 
 	std::string strInfo = std::string(__FUNCTION__) + ": Allocated port " + std::to_string(u16AllocatedPortNumber);
 	PLOG_INFO << strInfo;
+	
+	// Before we close the socket down
+	closesocket(requestingClientSocket);
 }
 
 void WinTCPRxModule::StartClientThread(SOCKET &clientSocket) 
