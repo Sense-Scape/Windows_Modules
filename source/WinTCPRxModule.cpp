@@ -105,6 +105,7 @@ void WinTCPRxModule::ConnectTCPSocket(SOCKET& WinSocket, uint16_t u16TCPPort)
 void WinTCPRxModule::AllocateAndStartClientProcess(SOCKET &AllocatingServerSocket)
 {
 	{
+<<<<<<< Updated upstream
 		std::string strInfo = std::string(__FUNCTION__) + ": Waiting for client connection requests";
 		PLOG_INFO << strInfo;
 	}
@@ -114,6 +115,22 @@ void WinTCPRxModule::AllocateAndStartClientProcess(SOCKET &AllocatingServerSocke
 		std::string strWarning = std::string(__FUNCTION__) + ": Error accepting client connection. Error code: " + std::to_string(WSAGetLastError()) + "";
 		PLOG_WARNING << strWarning;
 		return;
+=======
+		// A blocking wait to look for new TCP clients
+
+		SOCKET AllocatorSocket = accept(m_WinPortAllocatorSocket, NULL, NULL);
+		if (AllocatorSocket == INVALID_SOCKET) {
+			std::string strWarning = std::string(__FUNCTION__) + ": Error accepting client connection. Error code: " + std::to_string(WSAGetLastError()) + "";
+			PLOG_WARNING  << strWarning;
+			continue;
+		}
+
+		std::string strInfo = std::string(__FUNCTION__) + ": Accepted client connection. Client socket: " + std::to_string(m_WinPortAllocatorSocket) + "";
+		PLOG_WARNING << strInfo;
+
+
+		AllocateAndStartClientProcess(AllocatorSocket);
+>>>>>>> Stashed changes
 	}
 
 	std::string strInfo = std::string(__FUNCTION__) + ": Accepted client connection. Client socket: " + std::to_string(m_WinPortAllocatorSocket) + "";
