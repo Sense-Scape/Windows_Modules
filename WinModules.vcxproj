@@ -180,6 +180,8 @@
     <ClInclude Include="include\WinTCPTxModule.h" />
     <ClInclude Include="include/WinUDPRxModule.h" />
     <ClInclude Include="include/WinUDPTxModule.h" />
+    <ClInclude Include="include\WinMultiClientTCPRxModule.h" />
+    <ClInclude Include="include\WinMultiClientTCPTxModule.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="source\WAVWriterModule.cpp" />
@@ -187,6 +189,8 @@
     <ClCompile Include="source\WinTCPTxModule.cpp" />
     <ClCompile Include="source\WinUDPRxModule.cpp" />
     <ClCompile Include="source\WinUDPTxModule.cpp" />
+    <ClCompile Include="source\WinMultiClientTCPRxModule.cpp" />
+    <ClCompile Include="source\WinMultiClientTCPTxModule.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="components\Base_Module\BaseModule.vcxproj">
