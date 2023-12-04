@@ -13,10 +13,10 @@ WinTCPTxModule::WinTCPTxModule(std::string sIPAddress, std::string sTCPPort, uns
 
 WinTCPTxModule::~WinTCPTxModule()
 {
-	CloseTCPSocket(m_WinSocket);
+	DisconnectTCPSocket(m_WinSocket);
 }
 
-void WinTCPTxModule::ConnectTCPSocket(SOCKET& WinSocket, std::string& strTCPPort)
+void WinTCPTxModule::ConnectTCPSocket(SOCKET& WinSocket, uint16_t u16TCPPort)
 {
 	// Configuring Web Security Appliance
 	if (WSAStartup(MAKEWORD(2, 2), &m_WSA) != 0)
@@ -53,9 +53,9 @@ void WinTCPTxModule::ConnectTCPSocket(SOCKET& WinSocket, std::string& strTCPPort
 	// Lets start by creating the sock addr
 	sockaddr_in sockaddr;
 	sockaddr.sin_family = AF_INET;
-	sockaddr.sin_port = htons(stoi(strTCPPort));
+	sockaddr.sin_port = htons(u16TCPPort);
 
-	std::string strInfo = std::string(__FUNCTION__) + ": Connecting to Server at ip " + m_sDestinationIPAddress + " on port " + m_sTCPPort + "";
+	std::string strInfo = std::string(__FUNCTION__) + ": Connecting to Server at ip " + m_sDestinationIPAddress + " on port " + std::to_string(u16TCPPort) + "";
 	PLOG_INFO << strInfo;
 
 	// Lets then convert an IPv4 or IPv6 to its binary representation
@@ -66,28 +66,27 @@ void WinTCPTxModule::ConnectTCPSocket(SOCKET& WinSocket, std::string& strTCPPort
 		throw;
 	}
 
-	// And then make the socket
-	SOCKET clientSocket = socket(AF_INET, SOCK_STREAM, 0);
-	if (clientSocket == INVALID_SOCKET)
-	{
-		std::string strFatal = std::string(__FUNCTION__) + ": Failed to create socket. Error code: " + std::to_string(WSAGetLastError()) + "";
-		PLOG_FATAL << strFatal;
-		throw;
-	}
-
 	// Then lets do a blocking call to try connect
-	if (connect(clientSocket, (struct sockaddr*)&sockaddr, sizeof(sockaddr)) != SOCKET_ERROR)
+	if (connect(WinSocket, (struct sockaddr*)&sockaddr, sizeof(sockaddr)) != SOCKET_ERROR)
 	{
-		std::string strInfo = std::string(__FUNCTION__) + ": Connected to server at ip " + m_sDestinationIPAddress + " on port " + m_sTCPPort + "";
+		std::string strInfo = std::string(__FUNCTION__) + ": Connected to server at ip " + m_sDestinationIPAddress + " on port " + std::to_string(u16TCPPort) + "";
 		PLOG_INFO << strInfo;
 		m_bTCPConnected = true;
 	}
 	else
 	{
+<<<<<<< Updated upstream
 		std::string strWarning = std::string(__FUNCTION__) + ": Failed to connect to the server.Error code :" + std::to_string(WSAGetLastError());
 		PLOG_WARNING << strWarning;
 		m_bTCPConnected = false;
 		closesocket(clientSocket);
+=======
+		std::string strWarning = std::string(__FUNCTION__) + ": Failed to connect to the server(" + m_sDestinationIPAddress  + ") on port " + std::to_string(u16TCPPort) + ".Error code :" + std::to_string(WSAGetLastError());
+		PLOG_WARNING << strWarning;
+
+		closesocket(WinSocket);
+		m_bTCPConnected = false;
+>>>>>>> Stashed changes
 	}
 }
 
@@ -102,6 +101,7 @@ uint16_t WinTCPTxModule::WaitForReturnedPortAllocation(SOCKET& WinSocket)
 	FD_ZERO(&readfds);
 	FD_SET(WinSocket, &readfds);
 	int num_ready = select(WinSocket + 1, &readfds, NULL, NULL, NULL);
+
 	if (num_ready < 0) {
 		std::string strWarning = std::string(__FUNCTION__) + ": Failed to wait for data on socket ";
 		PLOG_WARNING << strWarning;
@@ -110,6 +110,7 @@ uint16_t WinTCPTxModule::WaitForReturnedPortAllocation(SOCKET& WinSocket)
 	// Read the data from the socket
 	if (FD_ISSET(WinSocket, &readfds))
 	{
+
 		// Arbitrarily using 2048 and 512
 		while (vcAccumulatedBytes.size() < sizeof(uint16_t))
 		{
@@ -130,7 +131,6 @@ uint16_t WinTCPTxModule::WaitForReturnedPortAllocation(SOCKET& WinSocket)
 				PLOG_WARNING << strWarning;
 			}
 
-
 			// And then try store data
 			if (uReceivedDataLength > vcByteData.size())
 			{
@@ -143,10 +143,18 @@ uint16_t WinTCPTxModule::WaitForReturnedPortAllocation(SOCKET& WinSocket)
 				vcAccumulatedBytes.emplace_back(vcByteData[i]);
 		}
 	}
+	else
+	{
+		std::string strWarning = std::string(__FUNCTION__) + ": To add logic here";
+		PLOG_WARNING << strWarning;
+		throw;
+	}
 
-	uint16_t a = 0;
-	memcpy(&a, &vcAccumulatedBytes[0], sizeof(uint16_t));
-	LOG_WARNING << std::to_string(a);
+	uint16_t u16AllocatedPortNumber;
+	memcpy(&u16AllocatedPortNumber, &vcAccumulatedBytes[0], sizeof(uint16_t));
+	LOG_WARNING << "Client allocated port " + std::to_string(u16AllocatedPortNumber);
+
+	return u16AllocatedPortNumber;
 }
 
 
@@ -159,9 +167,9 @@ void WinTCPTxModule::Process(std::shared_ptr<BaseChunk> pBaseChunk)
 	{
 		if (!m_bTCPConnected)
 		{
-
 			// Get TCP port and conenct to server
 			SOCKET AllocatingServerSocket;
+<<<<<<< Updated upstream
 			auto strTCPPort = m_sTCPPort;
 			ConnectTCPSocket(AllocatingServerSocket, strTCPPort);
 
@@ -170,18 +178,32 @@ void WinTCPTxModule::Process(std::shared_ptr<BaseChunk> pBaseChunk)
 				auto u16AllocatedPort = WaitForReturnedPortAllocation(AllocatingServerSocket);
 			}
 			
+=======
+			uint16_t u16TCPPort = std::stoi(m_sTCPPort);
+>>>>>>> Stashed changes
 
+			// Lets request a port number on which to communicate with the server
+			ConnectTCPSocket(AllocatingServerSocket, u16TCPPort);
+			if (!m_bTCPConnected)
+				continue;
+			auto u16AllocatedPortNumber = WaitForReturnedPortAllocation(AllocatingServerSocket);
+			DisconnectTCPSocket(AllocatingServerSocket);
 
+			// Now that we got it, let open that port and stream data
+			SOCKET AllocatedServerSocket;
+			ConnectTCPSocket(AllocatedServerSocket, u16AllocatedPortNumber);
+			std::thread clientThread([this, &AllocatedServerSocket, u16AllocatedPortNumber] { RunClientThread(AllocatedServerSocket, u16AllocatedPortNumber); });
+			clientThread.detach();
 		}
 		else
 		{
 			// While we are already connected lets just put the thread to sleep
-			std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+			std::this_thread::sleep_for(std::chrono::milliseconds(2500));
 		}
 	}
 }
 
-void WinTCPTxModule::RunClientThread(SOCKET& clientSocket)
+void WinTCPTxModule::RunClientThread(SOCKET& clientSocket, uint16_t u16AllocatedPortNumber)
 {
 	while (!m_bShutDown)
 	{
@@ -199,7 +221,8 @@ void WinTCPTxModule::RunClientThread(SOCKET& clientSocket)
 				// And then transmit (wohoo!!!)
 				int bytes_sent = send(clientSocket, &pvcData[0], length, 0);
 				if (bytes_sent < 0) {
-					// An error occurred.
+					std::string strInfo = std::string(__FUNCTION__) + ": No data transmitted on port " + std::to_string(u16AllocatedPortNumber);
+					PLOG_INFO << strInfo;
 					break;
 				}
 			}
@@ -212,21 +235,22 @@ void WinTCPTxModule::RunClientThread(SOCKET& clientSocket)
 		}
 		catch (const std::exception& e)
 		{
-			std::cout << e.what() << std::endl;
+			/*std::string strError = std::string(e.what());
+			PLOG_ERROR = strError;*/
 			break;
 		}
 	}
 
 	// In the case of stopping processing or an error we
 	// formally close the socket and update state variable
-	std::string strInfo = std::string(__FUNCTION__) + ": Closing TCP Socket at ip " + m_sDestinationIPAddress + " on port " + m_sTCPPort + "";
+	std::string strInfo = std::string(__FUNCTION__) + ": Closing TCP Socket at ip " + m_sDestinationIPAddress + " on port " + std::to_string(u16AllocatedPortNumber);
 	PLOG_INFO << strInfo;
 
-	CloseTCPSocket(clientSocket);
+	DisconnectTCPSocket(clientSocket);
 	m_bTCPConnected = false;
 }
 
-void WinTCPTxModule::CloseTCPSocket(SOCKET& clientSocket)
+void WinTCPTxModule::DisconnectTCPSocket(SOCKET& clientSocket)
 {
 	closesocket(clientSocket);
 	WSACleanup();
