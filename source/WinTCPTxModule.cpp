@@ -75,18 +75,11 @@ void WinTCPTxModule::ConnectTCPSocket(SOCKET& WinSocket, uint16_t u16TCPPort)
 	}
 	else
 	{
-<<<<<<< Updated upstream
-		std::string strWarning = std::string(__FUNCTION__) + ": Failed to connect to the server.Error code :" + std::to_string(WSAGetLastError());
-		PLOG_WARNING << strWarning;
-		m_bTCPConnected = false;
-		closesocket(clientSocket);
-=======
-		std::string strWarning = std::string(__FUNCTION__) + ": Failed to connect to the server(" + m_sDestinationIPAddress  + ") on port " + std::to_string(u16TCPPort) + ".Error code :" + std::to_string(WSAGetLastError());
+		std::string strWarning = std::string(__FUNCTION__) + ": Failed to connect to the server(" + m_sDestinationIPAddress + ") on port " + std::to_string(u16TCPPort) + ".Error code :" + std::to_string(WSAGetLastError());
 		PLOG_WARNING << strWarning;
 
 		closesocket(WinSocket);
 		m_bTCPConnected = false;
->>>>>>> Stashed changes
 	}
 }
 
@@ -169,23 +162,16 @@ void WinTCPTxModule::Process(std::shared_ptr<BaseChunk> pBaseChunk)
 		{
 			// Get TCP port and conenct to server
 			SOCKET AllocatingServerSocket;
-<<<<<<< Updated upstream
-			auto strTCPPort = m_sTCPPort;
-			ConnectTCPSocket(AllocatingServerSocket, strTCPPort);
-
-			if (m_bTCPConnected) 
-			{
-				auto u16AllocatedPort = WaitForReturnedPortAllocation(AllocatingServerSocket);
-			}
-			
-=======
 			uint16_t u16TCPPort = std::stoi(m_sTCPPort);
->>>>>>> Stashed changes
 
 			// Lets request a port number on which to communicate with the server
 			ConnectTCPSocket(AllocatingServerSocket, u16TCPPort);
 			if (!m_bTCPConnected)
+			{
+				std::this_thread::sleep_for(std::chrono::milliseconds(10000));
 				continue;
+			}
+
 			auto u16AllocatedPortNumber = WaitForReturnedPortAllocation(AllocatingServerSocket);
 			DisconnectTCPSocket(AllocatingServerSocket);
 
@@ -198,7 +184,7 @@ void WinTCPTxModule::Process(std::shared_ptr<BaseChunk> pBaseChunk)
 		else
 		{
 			// While we are already connected lets just put the thread to sleep
-			std::this_thread::sleep_for(std::chrono::milliseconds(2500));
+			std::this_thread::sleep_for(std::chrono::milliseconds(10000));
 		}
 	}
 }

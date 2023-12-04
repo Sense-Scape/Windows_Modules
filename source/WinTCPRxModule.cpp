@@ -1,13 +1,13 @@
 #include "WinTCPRxModule.h"
 
 WinTCPRxModule::WinTCPRxModule(std::string sIPAddress, std::string sTCPPort, unsigned uMaxInputBufferSize, int iDatagramSize = 512) :
-BaseModule(uMaxInputBufferSize),																															
-m_sIPAddress(sIPAddress),																																
-m_sTCPPort(sTCPPort),																																
-m_iDatagramSize(iDatagramSize),
-m_WinPortAllocatorSocket(),
-m_WSA(),
-m_u16LifeTimeConnectionCount()
+	BaseModule(uMaxInputBufferSize),
+	m_sIPAddress(sIPAddress),
+	m_sTCPPort(sTCPPort),
+	m_iDatagramSize(iDatagramSize),
+	m_WinPortAllocatorSocket(),
+	m_WSA(),
+	m_u16LifeTimeConnectionCount()
 {
 }
 
@@ -24,9 +24,11 @@ void WinTCPRxModule::Process(std::shared_ptr<BaseChunk> pBaseChunk)
 		// Connect to the allocation port and start listening for client to connections
 		SOCKET AllocatingServerSocket;
 		uint16_t u16TCPPort = std::stoi(m_sTCPPort);
-		ConnectTCPSocket(AllocatingServerSocket, u16TCPPort);
 
+		ConnectTCPSocket(AllocatingServerSocket, u16TCPPort);
 		AllocateAndStartClientProcess(AllocatingServerSocket);
+		CloseTCPSocket(AllocatingServerSocket);
+
 	}
 }
 
@@ -102,35 +104,18 @@ void WinTCPRxModule::ConnectTCPSocket(SOCKET& WinSocket, uint16_t u16TCPPort)
 	PLOG_INFO << strInfo;
 }
 
-void WinTCPRxModule::AllocateAndStartClientProcess(SOCKET &AllocatingServerSocket)
+void WinTCPRxModule::AllocateAndStartClientProcess(SOCKET& AllocatingServerSocket)
 {
 	{
-<<<<<<< Updated upstream
 		std::string strInfo = std::string(__FUNCTION__) + ": Waiting for client connection requests";
 		PLOG_INFO << strInfo;
 	}
-	
+
 	SOCKET PortNumberAllcationSocket = accept(AllocatingServerSocket, NULL, NULL);
 	if (m_WinPortAllocatorSocket == INVALID_SOCKET) {
 		std::string strWarning = std::string(__FUNCTION__) + ": Error accepting client connection. Error code: " + std::to_string(WSAGetLastError()) + "";
 		PLOG_WARNING << strWarning;
 		return;
-=======
-		// A blocking wait to look for new TCP clients
-
-		SOCKET AllocatorSocket = accept(m_WinPortAllocatorSocket, NULL, NULL);
-		if (AllocatorSocket == INVALID_SOCKET) {
-			std::string strWarning = std::string(__FUNCTION__) + ": Error accepting client connection. Error code: " + std::to_string(WSAGetLastError()) + "";
-			PLOG_WARNING  << strWarning;
-			continue;
-		}
-
-		std::string strInfo = std::string(__FUNCTION__) + ": Accepted client connection. Client socket: " + std::to_string(m_WinPortAllocatorSocket) + "";
-		PLOG_WARNING << strInfo;
-
-
-		AllocateAndStartClientProcess(AllocatorSocket);
->>>>>>> Stashed changes
 	}
 
 	std::string strInfo = std::string(__FUNCTION__) + ": Accepted client connection. Client socket: " + std::to_string(m_WinPortAllocatorSocket) + "";
@@ -147,9 +132,10 @@ void WinTCPRxModule::AllocateAndStartClientProcess(SOCKET &AllocatingServerSocke
 	}
 
 	// We now spin up a new thread to handle the allocated client connection
-	
 	std::thread clientThread([this, u16AllocatedPortNumber] { StartClientThread(u16AllocatedPortNumber); });
 	clientThread.detach();
+
+	PLOG_INFO << "-----";
 
 	// And once the thread is operation we transmit the port the thread uses to the client
 	auto vcData = std::vector<char>(sizeof(u16AllocatedPortNumber));
@@ -160,21 +146,20 @@ void WinTCPRxModule::AllocateAndStartClientProcess(SOCKET &AllocatingServerSocke
 		// The client should close the connection once it has figured out the port it should use
 		throw;
 	}
-	
+
 	{
 		std::string strInfo = std::string(__FUNCTION__) + ": Allocated client to port " + std::to_string(u16AllocatedPortNumber);
 		PLOG_INFO << strInfo;
 	}
 
 	CloseTCPSocket(PortNumberAllcationSocket);
-	CloseTCPSocket(AllocatingServerSocket);
-	
 }
 
 void WinTCPRxModule::StartClientThread(uint16_t u16AllocatedPortNumber)
 {
-	SOCKET clientSocket;
-	ConnectTCPSocket(clientSocket, u16AllocatedPortNumber);
+	SOCKET clientSocket2;
+	ConnectTCPSocket(clientSocket2, u16AllocatedPortNumber);
+	SOCKET clientSocket = accept(clientSocket2, NULL, NULL);
 
 	{
 		std::string strInfo = std::string(__FUNCTION__) + ": Starting client thread ";
@@ -224,7 +209,7 @@ void WinTCPRxModule::StartClientThread(uint16_t u16AllocatedPortNumber)
 					std::string strWarning = std::string(__FUNCTION__) + ": connection closed, too handle ";
 					PLOG_WARNING << strWarning;
 				}
-					
+
 
 				// And then try store data
 				if (uReceivedDataLength > vcByteData.size())
@@ -237,7 +222,7 @@ void WinTCPRxModule::StartClientThread(uint16_t u16AllocatedPortNumber)
 				for (int i = 0; i < uReceivedDataLength; i++)
 					vcAccumulatedBytes.emplace_back(vcByteData[i]);
 			}
-			
+
 			// Now see if a complete object has been passed on socket
 			// Search for null character
 			uint16_t u16SessionTransmissionSize;
@@ -255,7 +240,7 @@ void WinTCPRxModule::StartClientThread(uint16_t u16AllocatedPortNumber)
 			pUDPDataChunk->m_vcDataChunk = vcCompleteClassByteVector;
 
 			TryPassChunk(std::dynamic_pointer_cast<BaseChunk>(pUDPDataChunk));
-			
+
 		}
 		if (bReadError)
 			break;
