@@ -24,9 +24,11 @@ void WinTCPRxModule::Process(std::shared_ptr<BaseChunk> pBaseChunk)
 		// Connect to the allocation port and start listening for client to connections
 		SOCKET AllocatingServerSocket;
 		uint16_t u16TCPPort = std::stoi(m_sTCPPort);
-		ConnectTCPSocket(AllocatingServerSocket, u16TCPPort);
 
+		ConnectTCPSocket(AllocatingServerSocket, u16TCPPort);
 		AllocateAndStartClientProcess(AllocatingServerSocket);
+		CloseTCPSocket(AllocatingServerSocket);
+
 	}
 }
 
@@ -130,9 +132,10 @@ void WinTCPRxModule::AllocateAndStartClientProcess(SOCKET &AllocatingServerSocke
 	}
 
 	// We now spin up a new thread to handle the allocated client connection
-	
 	std::thread clientThread([this, u16AllocatedPortNumber] { StartClientThread(u16AllocatedPortNumber); });
 	clientThread.detach();
+
+	PLOG_INFO << "-----";
 
 	// And once the thread is operation we transmit the port the thread uses to the client
 	auto vcData = std::vector<char>(sizeof(u16AllocatedPortNumber));
@@ -150,14 +153,13 @@ void WinTCPRxModule::AllocateAndStartClientProcess(SOCKET &AllocatingServerSocke
 	}
 
 	CloseTCPSocket(PortNumberAllcationSocket);
-	CloseTCPSocket(AllocatingServerSocket);
-	
 }
 
 void WinTCPRxModule::StartClientThread(uint16_t u16AllocatedPortNumber)
 {
-	SOCKET clientSocket;
-	ConnectTCPSocket(clientSocket, u16AllocatedPortNumber);
+	SOCKET clientSocket2;
+	ConnectTCPSocket(clientSocket2, u16AllocatedPortNumber);
+	SOCKET clientSocket = accept(clientSocket2, NULL, NULL);
 
 	{
 		std::string strInfo = std::string(__FUNCTION__) + ": Starting client thread ";
