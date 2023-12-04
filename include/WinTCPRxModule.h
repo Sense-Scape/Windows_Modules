@@ -39,7 +39,7 @@ public:
     /**
     * @brief function called to start client thread
     */
-    void StartClientThread(SOCKET &clientSocket);
+    void StartClientThread(uint16_t u16AllocatedPortNumber);
 
     /**
      * @brief Calls process function only wiht no buffer checks
@@ -63,17 +63,17 @@ private:
     /**
     * @brief function called to start client thread
     */
-    void AllocateAndStartClientProcess(SOCKET& clientSocket);
+    void AllocateAndStartClientProcess(SOCKET& AllocatingServerSocket);
 
     /**
      * @brief Creates the windows socket using member variables
      */
-    void ConnectTCPSocket(SOCKET& socket, std::string& strTCPPort);
+    void ConnectTCPSocket(SOCKET& socket, uint16_t u16TCPPort);
 
     /*
      * @brief Closes Windows socket
      */
-    void CloseTCPSocket();
+    void CloseTCPSocket(SOCKET socket);
 
     /*
      * @brief Module process to reveice data from TCP buffer and pass to next module

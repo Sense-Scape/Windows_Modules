@@ -80,14 +80,14 @@ void WinTCPTxModule::ConnectTCPSocket(SOCKET& WinSocket, std::string& strTCPPort
 	{
 		std::string strInfo = std::string(__FUNCTION__) + ": Connected to server at ip " + m_sDestinationIPAddress + " on port " + m_sTCPPort + "";
 		PLOG_INFO << strInfo;
-		return;
+		m_bTCPConnected = true;
 	}
 	else
 	{
-		std::string strFatal = std::string(__FUNCTION__) + ": Failed to connect to the server.Error code :" + std::to_string(WSAGetLastError());
-		PLOG_FATAL << strFatal;
+		std::string strWarning = std::string(__FUNCTION__) + ": Failed to connect to the server.Error code :" + std::to_string(WSAGetLastError());
+		PLOG_WARNING << strWarning;
+		m_bTCPConnected = false;
 		closesocket(clientSocket);
-		throw;
 	}
 }
 
@@ -164,7 +164,12 @@ void WinTCPTxModule::Process(std::shared_ptr<BaseChunk> pBaseChunk)
 			SOCKET AllocatingServerSocket;
 			auto strTCPPort = m_sTCPPort;
 			ConnectTCPSocket(AllocatingServerSocket, strTCPPort);
-			auto u16AllocatedPort = WaitForReturnedPortAllocation(AllocatingServerSocket);
+
+			if (m_bTCPConnected) 
+			{
+				auto u16AllocatedPort = WaitForReturnedPortAllocation(AllocatingServerSocket);
+			}
+			
 
 
 		}
