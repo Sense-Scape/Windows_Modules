@@ -2,7 +2,19 @@
 
 ## Summary 
 
-How a single server handles and allocates multiple TCP client connections
+### Server Logic
+
+- A server will wait for request from a client on specified port
+- When a client opens a connection the server will respond with an allocated port
+- On allocation the server will open a new connection to listen
+- Then transmit this poort number to client
+- Once transmitted this connection is closes we wait for client connection and data
+
+### Client Logic
+
+- On start the client will keep trying to connect to server
+- Once connected it will wait for a response informing what port number to use
+- Once told it will open a TCP connection on that port and stream data
 
 ## Sequence Diagram
 
