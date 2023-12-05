@@ -37,6 +37,12 @@ public:
     void StartProcessing() override;
 
     /**
+    * @brief function called to start client thread
+    * @param[in] TCP Socket 
+    */
+    void RunClientThread(SOCKET& clientSocket);
+
+    /**
      * @brief Calls process function only wiht no buffer checks
      */
     void ContinuouslyTryProcess() override;
@@ -58,24 +64,13 @@ private:
     /**
      * @brief Creates the windows socket using member variables
      */
-    void ConnectTCPSocket(SOCKET& WinSocket, uint16_t u16TCPPort);
-
-    /**
-     * @brief Creates the windows socket using member variables
-     */
-    uint16_t WaitForReturnedPortAllocation(SOCKET& WinSocket);
-
-    /**
-    * @brief function called to start client thread
-    * @param[in] TCP Socket
-    */
-    void RunClientThread(SOCKET& clientSocket, uint16_t u16AllocatedPortNumber);
+    void ConnectTCPSocket();
 
     /*
      * @brief Closes Windows socket
      * @param[in] TCP Socket 
      */
-    void DisconnectTCPSocket(SOCKET& clientSocket);
+    void CloseTCPSocket(SOCKET& clientSocket);
 
     /*
      * @brief Module process to reveice data from TCP buffer and pass to next module
