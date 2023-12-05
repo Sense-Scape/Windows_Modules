@@ -37,11 +37,6 @@ public:
     void StartProcessing() override;
 
     /**
-    * @brief function called to start client thread
-    */
-    void StartClientThread(uint16_t u16AllocatedPortNumber);
-
-    /**
      * @brief Calls process function only wiht no buffer checks
      */
     void ContinuouslyTryProcess() override;
@@ -50,28 +45,36 @@ public:
      * @brief Returns module type
      * @param[out] ModuleType of processing module
      */
-    ModuleType GetModuleType() override { return ModuleType::WinTCPRxModule; };
+    ModuleType GetModuleType() override { return ModuleType::WinMultiClientTCPRxModule; };
 
 private:
-	std::string m_sIPAddress;	        ///< string format of host IP address
-	std::string m_sTCPPort;		        ///< string format of port to listen on
-    int m_iDatagramSize;                ///< Maxmimum TCP buffer length
-    SOCKET m_WinPortAllocatorSocket;    ///< Windows socket
-    WSADATA m_WSA;                      ///< Web Security Appliance for Windows socket
-    uint16_t m_u16LifeTimeConnectionCount; ///< Number of TCP client connections arcoss time
+	std::string m_sIPAddress;	            ///< String format of host IP address
+	std::string m_sTCPPort;		            ///< String format of port to listen on
+    int m_iDatagramSize;                    ///< Maxmimum TCP buffer length
+    uint16_t m_u16LifeTimeConnectionCount;  ///< Number of TCP client connections arcoss time
 
     /**
     * @brief function called to start client thread
+    * @param[in] u16TCPPort uint16_t port number which one whishes to use
+    */
+    void StartClientThread(uint16_t u16AllocatedPortNumber);
+
+    /**
+    * @brief function called to start client thread
+    * @param[in] WinSocket reference to TCP socket which one wishes to use
     */
     void AllocateAndStartClientProcess(SOCKET& AllocatingServerSocket);
 
     /**
      * @brief Creates the windows socket using member variables
+     * @param[in] WinSocket reference to TCP socket which one wishes to use
+     * @param[in] u16TCPPort uint16_t port number which one whishes to use
      */
     void ConnectTCPSocket(SOCKET& socket, uint16_t u16TCPPort);
 
     /*
      * @brief Closes Windows socket
+     * @param[in] socket reference to TCP socket which one wishes to use
      */
     void CloseTCPSocket(SOCKET socket);
 

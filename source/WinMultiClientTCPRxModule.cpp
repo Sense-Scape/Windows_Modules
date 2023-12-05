@@ -5,8 +5,6 @@ WinMultiClientTCPRxModule::WinMultiClientTCPRxModule(std::string sIPAddress, std
 	m_sIPAddress(sIPAddress),
 	m_sTCPPort(sTCPPort),
 	m_iDatagramSize(iDatagramSize),
-	m_WinPortAllocatorSocket(),
-	m_WSA(),
 	m_u16LifeTimeConnectionCount()
 {
 }
@@ -35,7 +33,8 @@ void WinMultiClientTCPRxModule::Process(std::shared_ptr<BaseChunk> pBaseChunk)
 void WinMultiClientTCPRxModule::ConnectTCPSocket(SOCKET& WinSocket, uint16_t u16TCPPort)
 {
 	// Configuring Web Security Appliance
-	if (WSAStartup(MAKEWORD(2, 2), &m_WSA) != 0)
+	WSADATA WSA;
+	if (WSAStartup(MAKEWORD(2, 2), &WSA) != 0)
 	{
 		std::string strError = std::string(__FUNCTION__) + "Windows TCP socket WSA Error. Error Code : " + std::to_string(WSAGetLastError()) + "";
 		PLOG_ERROR << strError;
@@ -112,13 +111,13 @@ void WinMultiClientTCPRxModule::AllocateAndStartClientProcess(SOCKET& Allocating
 	}
 
 	SOCKET PortNumberAllcationSocket = accept(AllocatingServerSocket, NULL, NULL);
-	if (m_WinPortAllocatorSocket == INVALID_SOCKET) {
+	if (PortNumberAllcationSocket == INVALID_SOCKET) {
 		std::string strWarning = std::string(__FUNCTION__) + ": Error accepting client connection. Error code: " + std::to_string(WSAGetLastError()) + "";
 		PLOG_WARNING << strWarning;
 		return;
 	}
 
-	std::string strInfo = std::string(__FUNCTION__) + ": Accepted client connection. Client socket: " + std::to_string(m_WinPortAllocatorSocket) + "";
+	std::string strInfo = std::string(__FUNCTION__) + ": Accepted client connection. Client socket: " + std::to_string(PortNumberAllcationSocket) + "";
 	PLOG_INFO << strInfo;
 
 	// Increment and define port we can allocate to new client to not have port clash
@@ -157,9 +156,9 @@ void WinMultiClientTCPRxModule::AllocateAndStartClientProcess(SOCKET& Allocating
 
 void WinMultiClientTCPRxModule::StartClientThread(uint16_t u16AllocatedPortNumber)
 {
-	SOCKET clientSocket2;
-	ConnectTCPSocket(clientSocket2, u16AllocatedPortNumber);
-	SOCKET clientSocket = accept(clientSocket2, NULL, NULL);
+	SOCKET InitialClientConnectionSocket;
+	ConnectTCPSocket(InitialClientConnectionSocket, u16AllocatedPortNumber);
+	SOCKET clientSocket = accept(InitialClientConnectionSocket, NULL, NULL);
 
 	{
 		std::string strInfo = std::string(__FUNCTION__) + ": Starting client thread ";
