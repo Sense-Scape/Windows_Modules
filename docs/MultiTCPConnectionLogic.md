@@ -7,7 +7,7 @@
 - A server will wait for request from a client on specified port
 - When a client opens a connection the server will respond with an allocated port
 - On allocation the server will open a new connection to listen
-- Then transmit this poort number to client
+- Then transmit this port number to client
 - Once transmitted this connection is closes we wait for client connection and data
 
 ### Client Logic
