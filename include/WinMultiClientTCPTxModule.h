@@ -45,35 +45,35 @@ public:
      * @brief Returns module type
      * @return ModuleType of processing module
      */
-    ModuleType GetModuleType() override { return ModuleType::WinTCPTxModule; };
+    ModuleType GetModuleType() override { return ModuleType::WinMultiClientTCPTxModule; };
 
 private:
-    std::string m_sDestinationIPAddress;///< string format of host IP address
-    std::string m_sTCPPort;		        ///< string format of port to listen on
-    SOCKET m_WinSocket;                 ///< Windows socket
-    WSADATA m_WSA;                      ///< Web Security Appliance for Windows socket
-    struct sockaddr_in m_SocketStruct;  ///< IPv4 Socket 
-    std::atomic<bool> m_bTCPConnected;  ///< State variable as to whether the TCP socket is connected
+    std::string m_sDestinationIPAddress;    ///< string format of host IP address
+    std::string m_sTCPAllocatorPortNumber;  ///< string format of port to listen on
+    std::atomic<bool> m_bTCPConnected;      ///< State variable as to whether the TCP socket is connected
 
     /**
-     * @brief Creates the windows socket using member variables
+     * @brief Conencts a Windows TCP socket on the specified port
+     * @param[in] WinSocket reference to TCP socket which one wishes to use
+     * @param[in] u16TCPPort uint16_t port number which one whishes to use
      */
     void ConnectTCPSocket(SOCKET& WinSocket, uint16_t u16TCPPort);
 
     /**
-     * @brief Creates the windows socket using member variables
+     * @brief Waits for allocated port number using given socket
+     * @param[in] WinSocket reference to TCP socket which server should reply on
      */
     uint16_t WaitForReturnedPortAllocation(SOCKET& WinSocket);
 
     /**
-    * @brief function called to start client thread
-    * @param[in] TCP Socket
+    * @brief Fucntion to start client thread data chunk tranmission
+    * @param[in] WinSocket reference to TCP socket which one wishes to use
+    * @param[in] u16AllocatedPortNumber uint16_t port number which one whishes to use
     */
     void RunClientThread(SOCKET& clientSocket, uint16_t u16AllocatedPortNumber);
 
     /*
      * @brief Closes Windows socket
-     * @param[in] TCP Socket 
      */
     void DisconnectTCPSocket(SOCKET& clientSocket);
 

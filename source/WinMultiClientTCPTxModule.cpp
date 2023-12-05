@@ -3,23 +3,20 @@
 WinMultiClientTCPTxModule::WinMultiClientTCPTxModule(std::string sIPAddress, std::string sTCPPort, unsigned uMaxInputBufferSize, int iDatagramSize = 512) :
 	BaseModule(uMaxInputBufferSize),
 	m_sDestinationIPAddress(sIPAddress),
-	m_sTCPPort(sTCPPort),
-	m_WinSocket(),
-	m_WSA(),
-	m_SocketStruct(),
+	m_sTCPAllocatorPortNumber(sTCPPort),
 	m_bTCPConnected()
 {
 }
 
 WinMultiClientTCPTxModule::~WinMultiClientTCPTxModule()
 {
-	DisconnectTCPSocket(m_WinSocket);
 }
 
 void WinMultiClientTCPTxModule::ConnectTCPSocket(SOCKET& WinSocket, uint16_t u16TCPPort)
 {
 	// Configuring Web Security Appliance
-	if (WSAStartup(MAKEWORD(2, 2), &m_WSA) != 0)
+	WSADATA WSA;
+	if (WSAStartup(MAKEWORD(2, 2), &WSA) != 0)
 	{
 		std::string strFatal = std::string(__FUNCTION__) + "Windows TCP socket WSA Error. Error Code : " + std::to_string(WSAGetLastError()) + "";
 		PLOG_FATAL << strFatal;
@@ -36,7 +33,8 @@ void WinMultiClientTCPTxModule::ConnectTCPSocket(SOCKET& WinSocket, uint16_t u16
 
 	// Allow address reuse
 	int optval = 1;
-	if (setsockopt(WinSocket, SOL_SOCKET, SO_REUSEADDR, (char*)&optval, sizeof(optval)) == SOCKET_ERROR) {
+	if (setsockopt(WinSocket, SOL_SOCKET, SO_REUSEADDR, (char*)&optval, sizeof(optval)) == SOCKET_ERROR) 
+	{
 		std::string strFatal = std::string(__FUNCTION__) + "UNKOWN ERROR";
 		PLOG_FATAL << strFatal;
 		throw;
@@ -44,7 +42,8 @@ void WinMultiClientTCPTxModule::ConnectTCPSocket(SOCKET& WinSocket, uint16_t u16
 
 	// Keep the connection open
 	int optlen = sizeof(optval);
-	if (setsockopt(WinSocket, SOL_SOCKET, SO_KEEPALIVE, (char*)&optval, optlen) < 0) {
+	if (setsockopt(WinSocket, SOL_SOCKET, SO_KEEPALIVE, (char*)&optval, optlen) < 0) 
+	{
 		std::string strFatal = std::string(__FUNCTION__) + "UNKOWN ERROR";
 		PLOG_FATAL << strFatal;
 		throw;
@@ -109,15 +108,15 @@ uint16_t WinMultiClientTCPTxModule::WaitForReturnedPortAllocation(SOCKET& WinSoc
 		{
 			std::vector<char> vcByteData;
 			vcByteData.resize(sizeof(uint16_t));
-			unsigned uReceivedDataLength = recv(WinSocket, &vcByteData[0], sizeof(uint16_t), 0);
+			int16_t i16ReceivedDataLength = recv(WinSocket, &vcByteData[0], sizeof(uint16_t), 0);
 
 			// Lets pseudo error check
-			if (uReceivedDataLength == -1)
+			if (i16ReceivedDataLength == -1)
 			{
 				std::string strWarning = std::string(__FUNCTION__) + ": recv() failed with error code : " + std::to_string(WSAGetLastError()) + " ";
 				PLOG_WARNING << strWarning;
 			}
-			else if (uReceivedDataLength == 0)
+			else if (i16ReceivedDataLength == 0)
 			{
 				// connection closed, too handle
 				std::string strWarning = std::string(__FUNCTION__) + ": connection closed, too handle ";
@@ -125,14 +124,14 @@ uint16_t WinMultiClientTCPTxModule::WaitForReturnedPortAllocation(SOCKET& WinSoc
 			}
 
 			// And then try store data
-			if (uReceivedDataLength > vcByteData.size())
+			if (i16ReceivedDataLength > vcByteData.size())
 			{
-				std::string strWarning = std::string(__FUNCTION__) + ": Closed connection to " + m_sTCPPort + ": received data length shorter than actual received data ";
+				std::string strWarning = std::string(__FUNCTION__) + ": Closed connection to " + m_sTCPAllocatorPortNumber + ": received data length shorter than actual received data ";
 				PLOG_WARNING << strWarning;
 				bReadError = true;
 				break;
 			}
-			for (int i = 0; i < uReceivedDataLength; i++)
+			for (int i = 0; i < i16ReceivedDataLength; i++)
 				vcAccumulatedBytes.emplace_back(vcByteData[i]);
 		}
 	}
@@ -153,21 +152,18 @@ uint16_t WinMultiClientTCPTxModule::WaitForReturnedPortAllocation(SOCKET& WinSoc
 
 void WinMultiClientTCPTxModule::Process(std::shared_ptr<BaseChunk> pBaseChunk)
 {
-	// Constantly looking for new connections and stating client threads
-	// One thread should be created at a time, corresponding to one simulated device
-	// In the case of an error, the thread will close and this will recreate the socket
 	while (!m_bShutDown)
 	{
 		if (!m_bTCPConnected)
 		{
-			// Get TCP port and conenct to server
 			SOCKET AllocatingServerSocket;
-			uint16_t u16TCPPort = std::stoi(m_sTCPPort);
+			uint16_t u16TCPPort = std::stoi(m_sTCPAllocatorPortNumber);
 
 			// Lets request a port number on which to communicate with the server
 			ConnectTCPSocket(AllocatingServerSocket, u16TCPPort);
 			if (!m_bTCPConnected)
 			{
+				// Could not connect so wait a bit as not to spam logs
 				std::this_thread::sleep_for(std::chrono::milliseconds(10000));
 				continue;
 			}
@@ -221,8 +217,8 @@ void WinMultiClientTCPTxModule::RunClientThread(SOCKET& clientSocket, uint16_t u
 		}
 		catch (const std::exception& e)
 		{
-			/*std::string strError = std::string(e.what());
-			PLOG_ERROR = strError;*/
+			std::string strError = "Client thread error: " + std::string(e.what());
+			PLOG_ERROR << strError;
 			break;
 		}
 	}
