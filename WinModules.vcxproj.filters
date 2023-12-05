@@ -30,6 +30,12 @@
     <ClInclude Include="include\WAVWriterModule.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="include\WinMultiClientTCPRxModule.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\WinMultiClientTCPTxModule.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="source\WAVWriterModule.cpp">
@@ -45,6 +51,12 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="source\WinTCPTxModule.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="source\WinMultiClientTCPRxModule.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="source\WinMultiClientTCPTxModule.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
