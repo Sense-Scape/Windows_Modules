@@ -205,8 +205,10 @@ void WinMultiClientTCPRxModule::StartClientThread(uint16_t u16AllocatedPortNumbe
 				else if (uReceivedDataLength == 0)
 				{
 					// connection closed, too handle
-					std::string strWarning = std::string(__FUNCTION__) + ": connection closed, too handle ";
-					PLOG_WARNING << strWarning;
+					std::string strInfo = std::string(__FUNCTION__) + ": client closed connection closed, shutting down thread";
+					PLOG_INFO << strInfo;
+					bReadError = true;
+					break;
 				}
 
 
