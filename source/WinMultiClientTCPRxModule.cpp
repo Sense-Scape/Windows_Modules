@@ -237,7 +237,7 @@ void WinMultiClientTCPRxModule::StartClientThread(uint16_t u16AllocatedPortNumbe
 			vcAccumulatedBytes = vcReducedAccumulatedBytes;
 
 			// And then store it in the generic class for futher processing
-			auto pUDPDataChunk = std::make_shared<UDPChunk>(m_iDatagramSize);
+			auto pUDPDataChunk = std::make_shared<ByteChunk>(m_iDatagramSize);
 			pUDPDataChunk->m_vcDataChunk = vcCompleteClassByteVector;
 
 			TryPassChunk(std::dynamic_pointer_cast<BaseChunk>(pUDPDataChunk));

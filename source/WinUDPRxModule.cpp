@@ -69,7 +69,7 @@ void WinUDPRxModule::Process(std::shared_ptr<BaseChunk> pBaseChunk)
 			break;
 
 		// Creating Chunk
-		auto pUDPDataChunk = std::make_shared<UDPChunk>(512);
+		auto pUDPDataChunk = std::make_shared<ByteChunk>(512);
 		pUDPDataChunk->m_vcDataChunk = vcByteData;
 
 		TryPassChunk(std::dynamic_pointer_cast<BaseChunk>(pUDPDataChunk));

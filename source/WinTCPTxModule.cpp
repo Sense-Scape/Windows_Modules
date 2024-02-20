@@ -123,7 +123,7 @@ void WinTCPTxModule::RunClientThread(SOCKET& clientSocket)
 			if (TakeFromBuffer(pBaseChunk))
 			{
 				// Cast it back to a UDP chunk
-				auto udpChunk = std::static_pointer_cast<UDPChunk>(pBaseChunk);
+				auto udpChunk = std::static_pointer_cast<ByteChunk>(pBaseChunk);
 				const auto pvcData = udpChunk->m_vcDataChunk;
 				size_t length = pvcData.size();
 
